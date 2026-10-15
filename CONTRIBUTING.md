@@ -2,7 +2,7 @@
 
 **简体中文** · [English](CONTRIBUTING.en.md) · [返回首页](README.md)
 
-一棵树、一只猫、一栋小屋，或一件你想让旅人偶然遇见的东西。你可以用图片创作，不需要改代码。
+一棵树、一栋小屋，或一件你想让旅人偶然遇见的东西。
 
 [打开创作页](https://jilinjl.github.io/PixelWalk/#/contribute) · [查看投稿](https://github.com/JilinJL/PixelWalk/issues?q=is%3Aissue+label%3Ascenery) · [内容规范](docs/zh-CN/content-policy.md)
 
