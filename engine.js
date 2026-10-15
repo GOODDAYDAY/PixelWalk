@@ -42,6 +42,16 @@ class TravelControls {
  stop(){this.autoWalking=false}
  input(left,right){return {left:!this.autoWalking&&left,right:right||(this.immersive&&this.autoWalking)}}
 }
+// Movement keys are accepted unless a dialog is open or the user is typing.
+// Buttons and links stay excluded only for their own activation keys (handled
+// by callers via preventDefault), so pressing D after clicking BGM still walks.
+function acceptsGameKeys(active,dialogOpen){
+ if(dialogOpen)return false;if(!active)return true;
+ const tag=String(active.tagName||'').toUpperCase();
+ if(tag==='TEXTAREA'||tag==='SELECT'||active.isContentEditable)return false;
+ if(tag==='INPUT')return ['button','checkbox','radio','range','file','submit','reset'].includes(String(active.type||'').toLowerCase());
+ return true;
+}
 function filterContributors(items,query=''){
  const seen=new Set(),q=query.trim().toLocaleLowerCase();
  return items.filter(person=>{if(!person||!person.name||person.userId==null||seen.has(String(person.userId)))return false;seen.add(String(person.userId));return !q||[person.name,person.github||''].some(x=>String(x).toLocaleLowerCase().includes(q))});
@@ -124,5 +134,5 @@ class Renderer{
  }
  player(time,night){const g=this.g,w=this.world,x=Math.round(w.playerScreenX),step=w.walking?Math.floor(w.distance/8)%4:0,bob=w.walking&&step%2?2:0,y=432-bob;g.save();g.translate(x,y);if(w.direction<0)g.scale(-1,1);g.globalAlpha=.16;rect(g,-14,0,30,4,'#1e392b');g.globalAlpha=1;const shoe='#384c49',pants='#58666b';rect(g,-7,-16,6,12,pants);rect(g,3,-16,6,12,pants);rect(g,-9-(step===1?4:0),-5,10,5,shoe);rect(g,2+(step===3?4:0),-5,10,5,shoe);rect(g,-10,-31,20,19,'#d1a557');rect(g,-15,-31,7,17,'#6e7960');rect(g,-16,-29,3,12,'#9ba280');rect(g,9,-27,5,13,'#e2bf8b');rect(g,-8,-44,20,16,'#e8c697');rect(g,-9,-45,22,7,'#574c41');rect(g,-10,-44,5,15,'#574c41');rect(g,8,-37,3,3,'#354d46');rect(g,-10,-48,23,7,'#b16f50');rect(g,-5,-52,15,6,'#c8875b');rect(g,-15,-43,32,4,'#d8a270');rect(g,-8,-30,20,4,'#a56c4b');g.restore()}
 }
-root.PixelWalk={builtinCatalog,artworkBitmap,CFG,World,Renderer,TravelControls,filterContributors,sprite,placement,clamp,spriteCache,MOON_PHASES,drawMoon};if(typeof module!=='undefined')module.exports={CFG,World,TravelControls,filterContributors,placement,MOON_PHASES,drawMoon};
+root.PixelWalk={acceptsGameKeys,builtinCatalog,artworkBitmap,CFG,World,Renderer,TravelControls,filterContributors,sprite,placement,clamp,spriteCache,MOON_PHASES,drawMoon};if(typeof module!=='undefined')module.exports={acceptsGameKeys,CFG,World,TravelControls,filterContributors,placement,MOON_PHASES,drawMoon};
 })(typeof window!=='undefined'?window:globalThis);

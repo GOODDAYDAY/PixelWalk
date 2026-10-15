@@ -1,0 +1,36 @@
+name: Scenery review
+# Collaborators (write/maintain/admin) comment `/approve` or `/reject 理由`
+# on a `scenery` issue. Approval snapshots the PNG into scenery/images and
+# queues it; the 30-minute publish workflow releases it. Others are ignored.
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  contents: write
+  issues: write
+concurrency:
+  group: scenery-git
+  cancel-in-progress: false
+jobs:
+  review:
+    if: >-
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.labels.*.name, 'scenery') &&
+      (startsWith(github.event.comment.body, '/approve') || startsWith(github.event.comment.body, '/reject'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - id: review
+        # The comment and issue body are read from the event file, never interpolated into shell.
+        run: node scripts/scenery.cjs review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: steps.review.outputs.changed == 'true'
+        run: bash scripts/commit-scenery.sh "scenery - review #$ISSUE"
+        env:
+          ISSUE: ${{ github.event.issue.number }}

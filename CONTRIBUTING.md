@@ -1,33 +1,37 @@
 # 参与 PixelWalk
 
-你可以投稿风景，也可以在 [风景 Issue 列表](https://github.com/JilinJL/PixelWalk/issues?q=is%3Aissue%20is%3Aopen%20label%3Ascenery) 中参与审核。
-
 ## 投稿
 
-1. 在游戏「参与设计」页选择透明 PNG / 静态 WebP，填写名称、日夜、体积和地面 / 空中分类。
-2. 生成像素预览并试玩，勾选确认，再点击「下载投稿 PNG」。
-3. 点击「前往 GitHub 投稿」，登录 GitHub，将下载的 160×160 PNG 拖入表单图片区，等待上传完成，再填写来源、分类与署名并提交。
-4. 按社区反馈修改时重新生成、试玩和上传，说明哪个版本替代旧版本。
+1. 打开游戏的「参与设计」页，放入一张透明 PNG / WebP，选择时段、体积和摆放，在试玩画面里走一遍。
+2. 点「投稿」：PNG 会下载，同时打开预填好的 GitHub Issue 表单。登录 GitHub，把 PNG 拖进「像素 PNG」，提交。
+3. 署名就是你的 GitHub 账号，作品投放后会出现在木屋鸣谢里并链接到你的主页。
 
-原图和草稿先留在你的浏览器；只有你在 GitHub 附上 PNG 并提交 Issue，才会公开投稿。公开仓库的 Issue 附件无需登录即可访问，请勿附私人资料。
+Issue 附件公开可见，请勿附私人内容。需要修改时直接编辑 Issue、替换图片，再等待审核。
 
-## 参与审核
+## 审核（仓库协作者）
 
-任何有 GitHub 账号的用户都可以评论：主体是否清晰、透明背景和像素风是否合适、尺寸 / 日夜 / 空中分类是否合理、署名和来源是否完整。可以用 👍 表示支持，说明问题比单纯投票更有帮助。
+在投稿 Issue 下评论：
 
-`scenery` 表示风景投稿，`pending-review` 表示待审，`needs-changes` 表示待修改，`accepted` 表示维护者接受，`published` 表示已经随版本发布。标签由维护者管理；票数、关闭 Issue 或添加 `accepted` 都不会自动把图片加入游戏。
+- `/approve`：校验 PNG（160×160、透明背景、≤1 MB、非动图）后入队，Issue 标为 `approved`。校验失败会在评论中说明原因。
+- `/reject 理由`：退回，标为 `needs-changes`，已入队的作品会被撤下。
 
-当前是人工收录：维护者检查实际 PNG、来源与最终版本，创建内容 PR，将图片接入正式景点目录并补齐 `content.js` 鸣谢；合并后发布，并把发布版本链接回原 Issue。游戏中的「管理」页仍是浏览器本地管理，无法修改公开作品。自动校验、内容 PR 生成和 Issue 状态同步尚未实现。
+只有 write / maintain / admin 权限的协作者的指令生效；作者不能审核自己的投稿（仓库管理员除外）。审核通过时存的是 PNG 快照，之后修改 Issue 不会影响已入队的版本，需要更新时重新 `/approve`。
+
+## 投放
+
+`scenery-publish` 每 30 分钟运行一次，把所有已通过的作品一次放出，提交并部署 GitHub Pages。部署成功后 Issue 标为 `published` 并关闭。队列为空时不做任何事。GitHub 的定时任务可能延迟几分钟；也可以在 Actions 里手动运行。
+
+标签：`scenery` 投稿 · `pending-review` 待审 · `needs-changes` 待修改 · `approved` 已入队 · `published` 已投放。
 
 ## 开发
 
-无需安装依赖。使用 Node.js 24+ 和 Python 3。
+需要 Node.js 24+ 和 Python 3，无需安装依赖。
 
 ```sh
-npm run dev
+npm run dev         # http://127.0.0.1:5173
 npm test
-npm run build:site
-npm run build
+npm run build:site  # dist/
+npm run build       # outputs/PixelWalk-demo.html
 ```
 
-`dist/` 是静态站发布目录；`outputs/PixelWalk-demo.html` 是内嵌音频的离线单文件。不要提交本地草稿、原始上传、密钥或工作目录。音乐许可见 `assets/audio/LICENSE.md`。
+`content.js`、`scenery/` 由工作流维护，请不要手改。音乐许可见 `assets/audio/LICENSE.md`。

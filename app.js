@@ -1,6 +1,6 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const {World,Renderer,TravelControls,filterContributors,sprite}=PixelWalk;
+const {World,Renderer,TravelControls,filterContributors,sprite,acceptsGameKeys}=PixelWalk;
 let mainWorld=new World();const mainRenderer=new Renderer($('#game'),mainWorld);
 let previewWorld=new World({preview:true}),previewRenderer=new Renderer($('#preview-game'),previewWorld);
 let currentRoute='',lastTime=0,toastTimer,hudTime=0;
@@ -8,26 +8,31 @@ const travel=new TravelControls(),inputs={left:new Set(),right:new Set()};
 const bgm=new PixelWalkMusic.MusicPlayer($('#bgm-day'),$('#bgm-night'),enabled=>{$('#sound-button').innerHTML='♫ <span>BGM '+(enabled?'开':'关')+'</span>';$('#sound-button').setAttribute('aria-pressed',String(enabled))},tell);
 bgm.setVolume(PixelWalkLibrary.volume());
 let catalogueTicket=0;
-async function refreshCatalogue(){const ticket=++catalogueTicket;const {ready,failed}=await PixelWalkLibrary.catalogue();if(ticket!==catalogueTicket)return;clearInput();mainWorld=new World({catalog:ready});mainRenderer.world=mainWorld;hud();if(failed.length)tell("部分本地素材无法读取，已跳过。")}
+async function refreshCatalogue(){const ticket=++catalogueTicket;const {ready}=await PixelWalkLibrary.catalogue();if(ticket!==catalogueTicket)return;clearInput();mainWorld=new World({catalog:ready});mainRenderer.world=mainWorld;hud()}
 refreshCatalogue();
 function clearInput(){inputs.left.clear();inputs.right.clear();travel.stop();$$('.held').forEach(b=>b.classList.remove('held'));lastTime=0}
 function tell(text){$('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3000)}
 function currentCanvas(){return currentRoute==='/contribute'?$('#preview-game'):$('#game')}
 function currentWorld(){return currentRoute==='/contribute'?previewWorld:mainWorld}
-function hold(button,dir,canvas){button.addEventListener('pointerdown',e=>{if(button.disabled)return;e.preventDefault();canvas.focus({preventScroll:true});button.setPointerCapture(e.pointerId);if(dir==='right'&&currentRoute==='/')travel.pressForward();inputs[dir].add('pointer'+e.pointerId);button.classList.add('held')});const end=e=>{inputs[dir].delete('pointer'+e.pointerId);button.classList.remove('held')};['pointerup','pointercancel','lostpointercapture'].forEach(ev=>button.addEventListener(ev,end))}
-hold($('#preview-walk'),'right',$('#preview-game'));
+function anyDialogOpen(){return $$('dialog').some(d=>d.open)}
+function hold(button,dir){button.addEventListener('pointerdown',e=>{if(button.disabled)return;e.preventDefault();currentCanvas().focus({preventScroll:true});button.setPointerCapture(e.pointerId);inputs[dir].add('pointer'+e.pointerId);button.classList.add('held')});const end=e=>{inputs[dir].delete('pointer'+e.pointerId);button.classList.remove('held')};['pointerup','pointercancel','lostpointercapture'].forEach(ev=>button.addEventListener(ev,end))}
+hold($('#preview-walk'),'right');hold($('#preview-back'),'left');
 function setImmersive(enabled){clearInput();travel.setImmersive(enabled);document.body.classList.toggle('immersive',enabled);$('#immersive-button').setAttribute('aria-pressed',String(enabled));$('#game').focus({preventScroll:true});hud()}
 function openCredits(){if(!mainWorld.enterHouse())return;clearInput();$('#thanks-search').value='';renderContributors();$('#credits-dialog').showModal();$('#thanks-scroll').scrollTop=0}
 function closeCredits(){clearInput();mainWorld.leaveHouse();if($('#credits-dialog').open)$('#credits-dialog').close();$('#game').focus({preventScroll:true})}
+// Game keys work anywhere on the play/preview page, not only when the canvas
+// has focus. Text fields and open dialogs keep their own keys.
 window.addEventListener('keydown',e=>{
- if(e.code==='Escape'&&travel.immersive&&!$('#credits-dialog').open&&!$('#music-dialog').open){e.preventDefault();setImmersive(false);return}
- if(document.activeElement!==currentCanvas()||$('#credits-dialog').open||$('#music-dialog').open||!['/','/contribute'].includes(currentRoute))return;
+ if(e.code==='Escape'&&travel.immersive&&!anyDialogOpen()){e.preventDefault();setImmersive(false);return}
+ if(!['/','/contribute'].includes(currentRoute)||!acceptsGameKeys(document.activeElement,anyDialogOpen())||e.ctrlKey||e.metaKey||e.altKey)return;
  if(e.code==='KeyW'&&currentRoute==='/'){e.preventDefault();if(!e.repeat)openCredits();return}
- const dir=['ArrowRight','KeyD'].includes(e.code)?'right':['ArrowLeft','KeyA'].includes(e.code)?'left':null;if(!dir)return;e.preventDefault();if(dir==='right'&&currentRoute==='/')travel.pressForward();inputs[dir].add(e.code)
+ const dir=['ArrowRight','KeyD'].includes(e.code)?'right':['ArrowLeft','KeyA'].includes(e.code)?'left':null;if(!dir)return;
+ e.preventDefault();if(document.activeElement!==currentCanvas())currentCanvas().focus({preventScroll:true});
+ if(dir==='right'&&currentRoute==='/')travel.pressForward();inputs[dir].add(e.code);
 });
 window.addEventListener('keyup',e=>{inputs.left.delete(e.code);inputs.right.delete(e.code)});
-window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',()=>{clearInput();bgm.setActive(!document.hidden&&['/','/contribute'].includes(currentRoute))});document.addEventListener('focusin',e=>{if(e.target!==currentCanvas())clearInput()});
-function route(){clearInput();if(travel.immersive)setImmersive(false);if($('#credits-dialog').open)closeCredits();if($('#music-dialog').open)$('#music-dialog').close();currentRoute=location.hash.slice(1)||'/';if(!['/','/contribute','/admin'].includes(currentRoute)){location.hash='/';return}$('#play-page').hidden=currentRoute!=='/';$('#contribute-page').hidden=currentRoute!=='/contribute';$('#admin-page').hidden=currentRoute!=='/admin';bgm.setActive(!document.hidden&&['/','/contribute'].includes(currentRoute));document.body.classList.toggle('management-open',currentRoute!=='/');if(currentRoute==='/admin')window.PixelWalkAdmin?.render();else window.PixelWalkAdmin?.closePreview();window.scrollTo(0,0)}
+window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',()=>{clearInput();bgm.setActive(!document.hidden&&['/','/contribute'].includes(currentRoute))});
+function route(){clearInput();if(travel.immersive)setImmersive(false);if($('#credits-dialog').open)closeCredits();if($('#music-dialog').open)$('#music-dialog').close();currentRoute=location.hash.slice(1)||'/';if(!['/','/contribute'].includes(currentRoute)){location.hash='/';return}$('#play-page').hidden=currentRoute!=='/';$('#contribute-page').hidden=currentRoute!=='/contribute';bgm.setActive(!document.hidden);document.body.classList.toggle('management-open',currentRoute!=='/');window.scrollTo(0,0);currentCanvas().focus({preventScroll:true})}
 window.addEventListener('hashchange',route);route();
 $('#immersive-button').onclick=()=>setImmersive(true);
 // Touch controls live on the scene, leaving the game free of direction buttons.
@@ -49,27 +54,55 @@ $('#restart-button').onclick=async()=>{await refreshCatalogue();$('#game').focus
 $('#enter-house').onclick=openCredits;$('#close-credits').onclick=closeCredits;
 $('#credits-dialog').addEventListener('cancel',e=>{e.preventDefault();closeCredits()});
 $('#thanks-search').addEventListener('input',()=>{renderContributors();$('#thanks-scroll').scrollTop=0});
-function renderContributors(){const all=filterContributors(PixelWalkContent.contributors),matches=filterContributors(all,$('#thanks-search').value);$('#thanks-count').textContent=all.length+' 位参与者';$('#thanks-list').replaceChildren(...matches.map(person=>{const li=document.createElement('li'),name=document.createElement('span');name.textContent=person.name;li.append(name);if(person.github){const handle=document.createElement('small');handle.textContent='@'+person.github;li.append(handle)}return li}));$('#thanks-empty').hidden=matches.length>0;$('#thanks-empty').textContent=all.length?'没有找到匹配的参与者。':'还没有参与者，期待第一处风景。'}
+const GITHUB_LOGIN=/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
+function renderContributors(){const all=filterContributors(PixelWalkContent.contributors||[]),matches=filterContributors(all,$('#thanks-search').value);$('#thanks-count').textContent=all.length+' 位参与者';$('#thanks-list').replaceChildren(...matches.map(person=>{const li=document.createElement('li');let name;if(person.github&&GITHUB_LOGIN.test(person.github)){name=document.createElement('a');name.href='https://github.com/'+person.github;name.target='_blank';name.rel='noopener noreferrer';name.textContent='@'+person.github}else{name=document.createElement('span');name.textContent=person.name}li.append(name);return li}));$('#thanks-empty').hidden=matches.length>0;$('#thanks-empty').textContent=all.length?'没有找到匹配的参与者。':'还没有参与者，期待第一处风景。'}
 $('#sound-button').onclick=()=>bgm.setEnabled(!bgm.enabled);$('#music-info-button').onclick=()=>{clearInput();$('#music-dialog').showModal()};$('#close-music').onclick=()=>$('#music-dialog').close();
+function showVolume(v){$('#bgm-volume').value=Math.round(v*100);$('#bgm-volume-value').textContent=Math.round(v*100)+'%'}
+showVolume(PixelWalkLibrary.volume());$('#bgm-volume').addEventListener('input',e=>{const v=Number(e.target.value)/100;bgm.setVolume(v);PixelWalkLibrary.setVolume(v);showVolume(v)});
 $('#fullscreen-button').onclick=async()=>{clearInput();try{if(document.fullscreenElement)await document.exitFullscreen();else await $('.game-shell').requestFullscreen();$('#game').focus()}catch{tell('此浏览器暂不支持全屏。')}};
 // Fullscreen keeps the same exit control, and Escape always stops cruise.
 document.addEventListener('fullscreenchange',()=>{clearInput();if(!document.fullscreenElement&&travel.immersive)setImmersive(false)});
 function hud(){const w=mainWorld;const scene=w.visibleScenes()[0];$('#art-caption').hidden=!scene||w.inCabinPage;if(scene){$('#art-title').textContent=scene.art.title;$('#art-author').textContent=scene.art.author||'Lin'}$('#enter-house').hidden=!w.canEnterHouse()||w.houseOpen;}
 function frame(t){const dt=lastTime?Math.min((t-lastTime)/1000,.05):0;lastTime=t;if(!document.hidden&&['/','/contribute'].includes(currentRoute)){const w=currentWorld(),input=currentRoute==='/'?travel.input(inputs.left.size>0,inputs.right.size>0):{left:inputs.left.size>0,right:inputs.right.size>0};w.update(dt,input);bgm.update(w.environment().night);if(currentRoute==='/'){mainRenderer.draw(t);if(t-hudTime>100){hud();hudTime=t}}else previewRenderer.draw(t)}requestAnimationFrame(frame)}requestAnimationFrame(frame);hud();
-// The local demo deliberately does not simulate authentication or public publication.
-let sourceImage=null,sourceURL=null,selectedPhase='day',selectedSize='medium',revision=0,processedRevision=-1,processedImage=null,selectionToken=0,savedRevision=-1;
-function status(text,error=false){$('#process-status').textContent=text;$('#process-status').classList.toggle('error',error)}
-function invalidate(){revision++;processedRevision=-1;processedImage=null;$('#confirm-preview').checked=false;$('#confirm-preview').disabled=true;$('#save-draft').disabled=true;$('#download-submission').disabled=true;$('#submit-issue').hidden=true;$('#pixel-result').hidden=true;$('#result-placeholder').hidden=false;$('#preview-watermark').hidden=false;previewWorld=new World({preview:true});previewRenderer=new Renderer($('#preview-game'),previewWorld);if(sourceImage)status('信息已更新，请重新生成预览。')}
-function showSource(img,name){sourceImage=img;$('#source-image').src=img.src;$('#source-image').hidden=false;$('#source-image').nextElementSibling.hidden=true;$('#file-label').textContent=name;$('#art-name').value=name.replace(/\.[^.]+$/,'').slice(0,40);$('#process-button').disabled=false;invalidate();status('图片已就绪。生成预览后，可以在原野里走过它。')}
-async function loadFile(file){const token=++selectionToken;invalidate();sourceImage=null;$('#process-button').disabled=true;if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)){status('请选择 PNG、JPEG 或静态 WebP 图片。',true);return}if(file.size>8*1024*1024){status('图片超过 8 MB，请换一张小一点的图片。',true);return}try{const bytes=new Uint8Array(await file.arrayBuffer());if(token!==selectionToken)return;const ascii=new TextDecoder('latin1').decode(bytes);if((file.type==='image/png'&&ascii.includes('acTL'))||(file.type==='image/webp'&&ascii.includes('ANIM'))){status('当前只支持静态图片，请选择一张静态素材。',true);return}const url=URL.createObjectURL(file),img=new Image();try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});if(token!==selectionToken){URL.revokeObjectURL(url);return}if(img.width*img.height>16000000||img.width>8192||img.height>8192){URL.revokeObjectURL(url);status('图片尺寸过大，请缩小到 1600 万像素以内。',true);return}if(sourceURL)URL.revokeObjectURL(sourceURL);sourceURL=url;showSource(img,file.name)}catch{URL.revokeObjectURL(url);throw new Error('decode')}}catch{status('无法读取这张图片，请尝试其他 PNG 或 WebP 文件。',true)}}
-$('#image-file').onchange=e=>loadFile(e.target.files[0]);['dragenter','dragover'].forEach(name=>$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.add('dragging')}));['dragleave','drop'].forEach(name=>$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.remove('dragging');if(name==='drop')loadFile(e.dataTransfer.files[0])}));
-$('#sample-button').onclick=async()=>{++selectionToken;const img=new Image();img.src=sprite('cat').toDataURL();await img.decode();if(sourceURL){URL.revokeObjectURL(sourceURL);sourceURL=null}showSource(img,'午睡的橘子');};
-$$('[data-phase]').forEach(b=>b.onclick=()=>{selectedPhase=b.dataset.phase;$$('[data-phase]').forEach(x=>x.classList.toggle('selected',x===b));invalidate()});$$('[data-size]').forEach(b=>b.onclick=()=>{selectedSize=b.dataset.size;$$('[data-size]').forEach(x=>x.classList.toggle('selected',x===b));invalidate()});$('#airborne').onchange=invalidate;$('#art-name').oninput=invalidate;
-const PALETTE=['#263d38','#3c5350','#58736c','#7c9990','#a5b6a2','#d0d3b1','#f5e5b7','#fff3d4','#493e38','#70523e','#947047','#b68c58','#d9ab6d','#edca8c','#7a4d46','#a36650','#c98564','#dea58a','#574a62','#7c6580','#a08a9e','#d0b0ba','#344c64','#527487','#78a0a9','#a8c8ca','#3e603e','#5b7f49','#7d9d56','#a7ba70','#c6cd8b','#dbd8a1'].map(h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)));
-function processImage(img,size){const temp=document.createElement('canvas'),scale=Math.min(1,1024/Math.max(img.width,img.height));temp.width=Math.round(img.width*scale);temp.height=Math.round(img.height*scale);const ctx=temp.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,temp.width,temp.height);const {data}=ctx.getImageData(0,0,temp.width,temp.height);let minX=temp.width,minY=temp.height,maxX=-1,maxY=-1,transparent=0;for(let y=0;y<temp.height;y++)for(let x=0;x<temp.width;x++){const a=data[(y*temp.width+x)*4+3];if(a<32)transparent++;if(a>=128){minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y)}}if(maxX<0)throw Error('没有找到可见主体，请选择包含清晰物体的图片。');if(transparent/(temp.width*temp.height)<.01)throw Error('这张图片没有有效透明背景。本地版尚未接入智能抠图，请使用透明 PNG / WebP，或点击小猫示例。');const out=document.createElement('canvas');out.width=out.height=160;const g=out.getContext('2d',{willReadFrequently:true}),max={small:32,medium:64,large:112,giant:160}[size],bw=maxX-minX+1,bh=maxY-minY+1,s=max/Math.max(bw,bh),dw=Math.max(1,Math.round(bw*s)),dh=Math.max(1,Math.round(bh*s));g.drawImage(temp,minX,minY,bw,bh,Math.floor((160-dw)/2),160-dh,dw,dh);const pixels=g.getImageData(0,0,160,160);for(let i=0;i<pixels.data.length;i+=4){const d=pixels.data;if(d[i+3]<128){d[i]=d[i+1]=d[i+2]=d[i+3]=0;continue}d[i+3]=255;let best=PALETTE[0],distance=Infinity;for(const p of PALETTE){const score=(p[0]-d[i])**2+(p[1]-d[i+1])**2+(p[2]-d[i+2])**2;if(score<distance){distance=score;best=p}}d[i]=best[0];d[i+1]=best[1];d[i+2]=best[2]}g.putImageData(pixels,0,0);return out}
-$('#process-button').onclick=()=>{if(!sourceImage)return;clearInput();try{const out=processImage(sourceImage,selectedSize);processedImage=out;processedRevision=revision;savedRevision=-1;const result=$('#pixel-result');result.getContext('2d').clearRect(0,0,160,160);result.getContext('2d').drawImage(out,0,0);result.hidden=false;$('#result-placeholder').hidden=true;$('#preview-watermark').hidden=true;const art={id:'local',title:$('#art-name').value.trim()||'我的风景',image:out,phase:selectedPhase,size:selectedSize,airborne:$('#airborne').checked};previewWorld=new World({preview:true,candidate:art});previewRenderer=new Renderer($('#preview-game'),previewWorld);$('#confirm-preview').disabled=false;status('预览已生成 · 已保留透明度，统一为 32 色像素。按住 D / → 走近它。')}catch(e){status(e.message,true)}};
-$('#preview-reset').onclick=()=>{clearInput();previewWorld.reset();$('#preview-game').focus({preventScroll:true})};$('#confirm-preview').onchange=()=>{const confirmed=$('#confirm-preview').checked&&processedRevision===revision;$('#save-draft').disabled=!confirmed||savedRevision===revision;$('#download-submission').disabled=!confirmed;$('#submit-issue').hidden=!confirmed};
-$('#download-submission').onclick=()=>{if(!processedImage||processedRevision!==revision||!$('#confirm-preview').checked)return;const link=document.createElement('a');link.href=processedImage.toDataURL('image/png');link.download='PixelWalk-scenery.png';link.click();status('像素 PNG 已准备下载。请在 GitHub 投稿表单中手动附上这张图片；提交前不会上传。')};
-function readDrafts(){try{const result=JSON.parse(localStorage.getItem('pixelwalk.drafts.v1')||'[]');return Array.isArray(result)?result.filter(d=>d&&typeof d.image==='string'&&d.image.startsWith('data:image/png;base64,')).slice(-8):[]}catch{return []}}
-$('#save-draft').onclick=()=>{if(!processedImage||processedRevision!==revision||!$('#confirm-preview').checked||savedRevision===revision)return;const drafts=readDrafts();drafts.push({id:Date.now(),title:$('#art-name').value.trim()||'我的风景',phase:selectedPhase,size:selectedSize,airborne:$('#airborne').checked,image:processedImage.toDataURL('image/png'),revision,created:new Date().toISOString()});try{localStorage.setItem('pixelwalk.drafts.v1',JSON.stringify(drafts.slice(-8)));savedRevision=revision;$('#save-draft').disabled=true;status('已保存到本地草稿。仅保留最近 8 件，可到管理页审核加入本机景点库。')}catch{status('浏览器未能保存草稿，可能已禁用存储或空间不足。',true)}};
+// Studio: choose image → auto pixelate → walk past it → download → submit on GitHub.
+// Any option change re-renders immediately; nothing is stored in the browser.
+let sourceImage=null,sourceURL=null,processedImage=null,selectionToken=0;
+const opts={phase:'day',size:'medium',airborne:false};
+const ISSUE_URL='https://github.com/JilinJL/PixelWalk/issues/new';
+function status(text='',error=false){$('#process-status').textContent=text;$('#process-status').classList.toggle('error',error)}
+function setReady(ready){$('#download-submission').disabled=!ready;$('#submit-issue').setAttribute('aria-disabled',String(!ready));$('#submit-issue').tabIndex=ready?0:-1}
+function issueLink(){const q=new URLSearchParams({template:'scenery.yml',title:'[风景投稿] '+artTitle(),'work-title':artTitle(),phase:opts.phase==='night'?'夜景':'日景',size:{small:'小',medium:'中',large:'大',giant:'巨大'}[opts.size],placement:opts.airborne?'空中':'地面'});return ISSUE_URL+'?'+q}
+function artTitle(){return $('#art-name').value.trim()||'我的风景'}
+function rebuild(){
+ clearInput();processedImage=null;setReady(false);
+ const result=$('#pixel-result');
+ if(!sourceImage){result.hidden=true;$('#slot-empty').hidden=false;previewWorld=new World({preview:true});previewRenderer=new Renderer($('#preview-game'),previewWorld);return}
+ try{processedImage=processImage(sourceImage,opts.size)}catch(e){result.hidden=true;$('#slot-empty').hidden=false;status(e.message,true);previewWorld=new World({preview:true});previewRenderer=new Renderer($('#preview-game'),previewWorld);return}
+ const g=result.getContext('2d');g.clearRect(0,0,160,160);g.drawImage(processedImage,0,0);result.hidden=false;$('#slot-empty').hidden=true;
+ previewWorld=new World({preview:true,candidate:{id:'local',title:artTitle(),author:'你',image:processedImage,...opts}});previewRenderer=new Renderer($('#preview-game'),previewWorld);
+ setReady(true);$('#submit-issue').href=issueLink();status('');
+}
+function showSource(img,name){sourceImage=img;if(!$('#art-name').value.trim())$('#art-name').value=name.replace(/\.[^.]+$/,'').slice(0,40);rebuild();$('#preview-game').focus({preventScroll:true})}
+async function loadFile(file){const token=++selectionToken;if(!file)return;
+ if(!['image/png','image/webp'].includes(file.type))return status('需要透明 PNG / WebP',true);
+ if(file.size>8*1024*1024)return status('图片超过 8 MB',true);
+ try{const bytes=new Uint8Array(await file.arrayBuffer());if(token!==selectionToken)return;const ascii=new TextDecoder('latin1').decode(bytes);if((file.type==='image/png'&&ascii.includes('acTL'))||(file.type==='image/webp'&&ascii.includes('ANIM')))return status('不支持动图',true);
+  const url=URL.createObjectURL(file),img=new Image();
+  try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url})}catch{URL.revokeObjectURL(url);throw Error()}
+  if(token!==selectionToken){URL.revokeObjectURL(url);return}
+  if(img.width*img.height>16000000){URL.revokeObjectURL(url);return status('图片尺寸过大',true)}
+  if(sourceURL)URL.revokeObjectURL(sourceURL);sourceURL=url;$('#art-name').value='';showSource(img,file.name)
+ }catch{status('无法读取这张图片',true)}}
+$('#image-file').onchange=e=>loadFile(e.target.files[0]);
+['dragenter','dragover'].forEach(name=>$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.add('dragging')}));
+['dragleave','drop'].forEach(name=>$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.remove('dragging');if(name==='drop')loadFile(e.dataTransfer.files[0])}));
+$('#sample-button').onclick=async()=>{++selectionToken;const img=new Image();img.src=sprite('cat').toDataURL();await img.decode();if(sourceURL){URL.revokeObjectURL(sourceURL);sourceURL=null}$('#art-name').value='';showSource(img,'午睡的橘子')};
+function pick(attr,key,parse=v=>v){$$(`[data-${attr}]`).forEach(b=>b.onclick=()=>{opts[key]=parse(b.dataset[attr]);$$(`[data-${attr}]`).forEach(x=>{x.classList.toggle('selected',x===b);x.setAttribute('aria-pressed',String(x===b))});rebuild()})}
+pick('phase','phase');pick('size','size');pick('air','airborne',v=>v==='true');
+$('#art-name').addEventListener('change',rebuild);
+$('#preview-reset').onclick=()=>{clearInput();previewWorld.reset();$('#preview-game').focus({preventScroll:true})};
+$('#download-submission').onclick=()=>{if(!processedImage)return;const link=document.createElement('a');link.href=processedImage.toDataURL('image/png');link.download='PixelWalk-'+artTitle().replace(/[\\/:*?"<>|\s]+/g,'_')+'.png';link.click()};
+$('#submit-issue').addEventListener('click',e=>{if(!processedImage){e.preventDefault();return}$('#submit-issue').href=issueLink();$('#download-submission').click()});
+// Decode at most 640px on the long side; pixelate.js does the real work on raw RGBA.
+function processImage(img,size){const scale=Math.min(1,640/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));const g=c.getContext('2d',{willReadFrequently:true});g.imageSmoothingQuality='high';g.drawImage(img,0,0,c.width,c.height);const result=PixelWalkPixelate.pixelate(g.getImageData(0,0,c.width,c.height),size),out=document.createElement('canvas');out.width=out.height=160;out.getContext('2d').putImageData(new ImageData(result.data,160,160),0,0);return out}
 window.addEventListener('pagehide',()=>{clearInput();if(sourceURL)URL.revokeObjectURL(sourceURL);bgm.dispose()});
