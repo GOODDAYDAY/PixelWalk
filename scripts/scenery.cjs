@@ -32,7 +32,9 @@ async function download(url){
  const signal=AbortSignal.timeout(30000);
  for(let redirects=0;redirects<=5;redirects++){
   const target=new URL(url);
-  if(target.protocol!=='https:'||target.username||target.password||target.port||!L.ALLOWED_HOSTS.test(target.hostname))throw Object.assign(Error('图片地址不在 GitHub 附件域名内'),{userFacing:true});
+  // GitHub attachments redirect to this verified GitHub-owned S3 bucket.
+  // Permit this exact host only after a trusted attachment URL; never arbitrary S3.
+  if(target.protocol!=='https:'||target.username||target.password||target.port||!(L.ALLOWED_HOSTS.test(target.hostname)||(redirects>0&&target.hostname==='github-production-user-asset-6210df.s3.amazonaws.com')))throw Object.assign(Error('图片地址不在 GitHub 附件域名内'),{userFacing:true});
   const res=await fetch(target.href,{redirect:'manual',signal});
   if([301,302,303,307,308].includes(res.status)){
    const location=res.headers.get('location');await res.body?.cancel?.();

@@ -63,7 +63,7 @@ function pipeline(){
  globalThis.fetch=async(url,opt={})=>{const log=JSON.parse(fs.readFileSync(${JSON.stringify(calls)}));log.push({url,method:opt.method||'GET',body:opt.body&&JSON.parse(opt.body)});fs.writeFileSync(${JSON.stringify(calls)},JSON.stringify(log));
   if(process.env.FAIL_ROUTE&&url.includes(process.env.FAIL_ROUTE)&&(!process.env.FAIL_METHOD||opt.method===process.env.FAIL_METHOD))return {ok:false,status:Number(process.env.FAIL_STATUS||404),text:async()=>'test API failure'};
   if(url.includes('user-attachments')&&process.env.REDIRECT_URL)return {ok:false,status:302,headers:{get:()=>process.env.REDIRECT_URL}};
-  if(url.includes('user-attachments')){const b=Buffer.from(${JSON.stringify(png.toString('base64'))},'base64');return {ok:true,status:200,url,body:[b]}}
+  if(url.includes('user-attachments')||url===process.env.STORAGE_PNG_URL){const b=Buffer.from(${JSON.stringify(png.toString('base64'))},'base64');return {ok:true,status:200,url,body:[b]}}
   const m=url.match(/collaborators\\/([^/]+)\\/permission/);if(m)return {ok:true,status:200,json:async()=>({permission:perms[m[1]]||'none'})};
   if(opt.method==='GET'&&/issues\\/7$/.test(url))return {ok:true,status:200,json:async()=>JSON.parse(fs.readFileSync(process.env.CURRENT_ISSUE||process.env.GITHUB_EVENT_PATH)).issue};
   if(url.includes('/comments?'))return {ok:true,status:200,json:async()=>JSON.parse(fs.readFileSync(${JSON.stringify(comments)}))};
@@ -172,4 +172,16 @@ test('one publish batch promotes every queued artwork and retries all unannounce
  assert.equal(p.run('publish').issues,'7 8');
  assert.ok(p.manifest().items.every(i=>i.status==='published'));
  assert.equal(p.run('publish').issues,'7 8');
+});
+
+test('GitHub attachment storage redirect is accepted, arbitrary buckets remain blocked',()=>{
+ const url='https://github-production-user-asset-6210df.s3.amazonaws.com/example.png';
+ const p=pipeline();
+ assert.equal(p.run('review',p.ev('helper','/approve'),{REDIRECT_URL:url,STORAGE_PNG_URL:url}).changed,'true');
+ assert.ok(p.log().some(c=>c.url===url));
+ for(const bad of ['https://attacker.s3.amazonaws.com/example.png','https://github-production-user-asset-6210df.s3.amazonaws.com.evil.example/file']){
+  const q=pipeline();
+  assert.equal(q.run('review',q.ev('helper','/approve'),{REDIRECT_URL:bad}).changed,'false');
+  assert.ok(!q.log().some(c=>c.url===bad));
+ }
 });
