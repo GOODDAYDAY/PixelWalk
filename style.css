@@ -64,3 +64,9 @@
 .dpad .px-key{min-width:44px}
 }
 .management-open .utilities{display:none}
+
+/* Repository shortcut stays available on the game and studio pages. */
+.github-link{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:36px;height:36px;border-radius:5px;color:#6d7b6b}
+.github-link svg{display:block}
+.github-link:hover{background:#e9ecdf;color:var(--ink)}
+@media(max-width:760px){.site-header{position:relative}.site-header nav{flex-basis:100%;flex-wrap:wrap;justify-content:flex-end;gap:12px}.github-link{position:absolute;top:6px;right:18px;width:44px;height:44px}}
