@@ -5,7 +5,11 @@ labels: [scenery, pending-review]
 body:
   - type: markdown
     attributes:
-      value: "把下载的 PNG 拖入下方。署名为你的 GitHub 账号。投稿前阅读 [内容规范 / Content policy](https://github.com/JilinJL/PixelWalk/blob/main/docs/zh-CN/content-policy.md)。表单暂用中文；英文说明见 CONTRIBUTING.md。"
+      value: |
+        把下载的 PNG 拖入下方；图片不会自动上传。署名为你的 GitHub 账号。
+        投稿前阅读[图文贡献指南](https://github.com/JilinJL/PixelWalk/blob/main/CONTRIBUTING.md)和[内容规范](https://github.com/JilinJL/PixelWalk/blob/main/docs/zh-CN/content-policy.md)。提交后需人工审核和部署，才会进入公开游戏。
+
+        [English submission guide](https://github.com/JilinJL/PixelWalk/blob/main/CONTRIBUTING.en.md)
   - type: input
     id: work-title
     attributes:

@@ -1,6 +1,6 @@
 # Gameplay guide
 
-[中文](../zh-CN/gameplay.md) · [README](../../README.md)
+[中文](../zh-CN/gameplay.md) · [README](../../README.en.md)
 
 PixelWalk is a single-player pixel walking game without scores, combat, or leaderboards. Walking reveals scenery and advances the day/night cycle. Reviewed community submissions become part of the public scenery; a local preview is not a submission or publication.
 

@@ -1,6 +1,6 @@
 # Submission and moderation
 
-[中文](../zh-CN/moderation.md) · [README](../../README.md)
+[中文](../zh-CN/moderation.md) · [README](../../README.en.md)
 
 ## Human and automated responsibilities
 
@@ -20,7 +20,7 @@ Use the 风景投稿 template and preserve its Chinese headings:
 | 素材来源 | Required source and license information |
 | 确认 | Check both redistribution consent and content-policy acknowledgment |
 
-Final files must be at most 1 MiB (1,048,576 bytes), 160×160, nonanimated, noninterlaced 8-bit RGBA or indexed PNG. They must contain visible pixels and at least 1% transparent pixels. Automation validates structure, CRC, decompressed size, and transparency, then reencodes without metadata. Alpha below 128 becomes transparent; other alpha becomes opaque. HTTPS and GitHub domains are checked before each download/redirect, with time, size, and redirect limits. Technical validation does not establish content compliance.
+Final files must be at most 1 MiB (1,048,576 bytes), 160×160, nonanimated, noninterlaced 8-bit RGBA or indexed PNG. They must contain visible pixels and at least 1% transparent pixels. Automation validates structure, CRC, decompressed size, and transparency, then reencodes without metadata. Alpha below 128 becomes transparent; other alpha becomes opaque. HTTPS and domains are checked before each request, with time, size, and redirect limits. Initial URLs must be GitHub attachments. A trusted attachment may redirect to the exact verified storage host `github-production-user-asset-6210df.s3.amazonaws.com`; arbitrary S3 buckets and deceptive suffixes remain blocked. Technical validation does not establish content compliance.
 
 ## Reviewer commands
 

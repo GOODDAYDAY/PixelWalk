@@ -1,6 +1,6 @@
 # Content policy and prohibited submissions
 
-[中文](../zh-CN/content-policy.md) · [README](../../README.md)
+[中文](../zh-CN/content-policy.md) · [README](../../README.en.md)
 
 PixelWalk serves a broad audience looking for a quiet walking experience. This policy covers images, titles, source descriptions, links, and comments, including AI-assisted work, pixelated imagery, obfuscation, coded references, and altered wording. Pixel conversion does not exempt prohibited content. These are project curation rules, not a legal judgment about all expression.
 

@@ -1,6 +1,6 @@
 # Automated publishing, deployment, and recovery
 
-[中文](../zh-CN/publishing.md) · [README](../../README.md)
+[中文](../zh-CN/publishing.md) · [README](../../README.en.md)
 
 ## Pipeline
 
@@ -41,4 +41,4 @@ Scheduled Actions are best-effort: runs can be delayed/dropped, or stop due to i
 
 ## Verification limits
 
-Mocked API tests do not prove real token write capabilities. Verify tests, snapshot push, Pages deployment, public image availability, and Issue updates separately. An empty-queue run skips deployment/notification and is not an end-to-end publication test. See the [audit report](../automation-audit.md) for actual evidence.
+Mocked API tests do not prove real token write capabilities. Verify tests, snapshot push, Pages deployment, public image availability, and Issue updates separately. An empty-queue run skips deployment/notification and is not an end-to-end publication test. See the [audit report](automation-audit.md) for actual evidence.

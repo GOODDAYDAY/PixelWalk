@@ -2,4 +2,7 @@ blank_issues_enabled: true
 contact_links:
   - name: 投稿与社区审核指南
     url: https://github.com/JilinJL/PixelWalk/blob/main/CONTRIBUTING.md
-    about: 查看投稿格式、审核标准和公开收录流程。
+    about: 查看带截图的投稿步骤、收录条件与状态说明。
+  - name: English contribution guide
+    url: https://github.com/JilinJL/PixelWalk/blob/main/CONTRIBUTING.en.md
+    about: Illustrated submission steps, acceptance criteria, and publication status.
