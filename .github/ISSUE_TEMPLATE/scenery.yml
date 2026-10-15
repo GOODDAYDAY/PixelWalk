@@ -1,0 +1,66 @@
+name: 风景投稿
+description: 分享一张已经在 PixelWalk 试玩过的透明像素风景。
+title: "[风景投稿] "
+labels: [scenery, pending-review]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先在游戏的「参与设计」页生成像素预览、确认试玩并下载 PNG，再把该 PNG 拖入下方图片区。公开 Issue 的附件所有人可见，请勿上传私人照片或原始大图。社区可评论参与审核，最终收录由维护者通过内容 PR 完成。
+  - type: input
+    id: work-title
+    attributes:
+      label: 作品名称
+    validations:
+      required: true
+  - type: textarea
+    id: image
+    attributes:
+      label: 像素 PNG
+      description: 将下载的 PixelWalk-scenery.png 拖入此处，等待附件上传完成。要求 160×160、透明背景、静态 PNG。
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: 展示时段
+      options: [日景, 夜景]
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: 体积
+      options: [小, 中, 大, 巨大]
+    validations:
+      required: true
+  - type: dropdown
+    id: placement
+    attributes:
+      label: 摆放方式
+      options: [地面, 空中]
+    validations:
+      required: true
+  - type: input
+    id: credit
+    attributes:
+      label: 署名
+      description: 收录后展示在作品和鸣谢中的名字；留空时使用 GitHub 用户名。
+  - type: textarea
+    id: source
+    attributes:
+      label: 创作说明与素材来源
+      description: 请说明原创、AI 辅助或第三方素材来源及使用许可。
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 投稿确认
+      options:
+        - label: 我已在 PixelWalk 中试玩并确认这张 PNG 的效果。
+          required: true
+        - label: 我有权公开此作品，并允许 PixelWalk 以署名方式在游戏与公开仓库中展示、调整和分发。
+          required: true
+        - label: 我理解评论和投票只是社区意见，作品需维护者审核并发布后才会进入公开游戏。
+          required: true

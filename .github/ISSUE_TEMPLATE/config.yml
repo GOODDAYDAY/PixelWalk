@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 投稿与社区审核指南
+    url: https://github.com/JilinJL/PixelWalk/blob/main/CONTRIBUTING.md
+    about: 查看投稿格式、审核标准和公开收录流程。
