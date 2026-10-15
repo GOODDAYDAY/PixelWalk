@@ -1,4 +1,20 @@
 {
  "version": 1,
- "items": []
+ "items": [
+  {
+   "issue": 3,
+   "login": "VecSum",
+   "userId": 323084256,
+   "title": "埃菲尔铁塔",
+   "phase": "day",
+   "size": "giant",
+   "airborne": false,
+   "source": "埃菲尔铁塔",
+   "file": "scenery/images/gh-3.png",
+   "sha256": "85713889288fa3b6d90e477eefb1a745abe45b3963e06a61d14b425d54a3b1b0",
+   "status": "queued",
+   "approvedBy": "JilinJL",
+   "approvedAt": "2026-10-15T17:43:04.629Z"
+  }
+ ]
 }

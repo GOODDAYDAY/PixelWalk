@@ -6,5 +6,12 @@
   "action": "settings",
   "id": "world-settings",
   "title": "世界参数"
+ },
+ {
+  "at": "2026-10-15T17:43:04.629Z",
+  "actor": "JilinJL",
+  "actorId": 62745529,
+  "action": "approve",
+  "issue": 3
  }
 ]
