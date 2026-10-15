@@ -7,7 +7,8 @@
     "dev": "python3 -m http.server 5173 --bind 127.0.0.1",
     "build": "node scripts/build-single.cjs",
     "test": "node --test tests/*.test.cjs",
-    "build:site": "node scripts/build-site.cjs"
+    "build:site": "node scripts/build-site.cjs",
+    "admin": "node scripts/admin-server.cjs"
   },
   "engines": {
     "node": ">=24"

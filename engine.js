@@ -1,7 +1,8 @@
 /* PixelWalk: dependency-free world simulation and shared Canvas renderer. */
 (function(root){
 'use strict';
-const CFG={width:960,height:540,ground:432,playerX:144,speed:80,stride:1328,container:320,recycleMargin:64,transition:320,spawnMargin:48,cabinDoorX:-724,cabinMinX:-1008};
+const settings=(root.PixelWalkConfig||(typeof require==='function'?require('./settings.js'):null)).values;
+const CFG={width:960,height:540,ground:432,playerX:144,speed:80,stride:1328,container:320,recycleMargin:64,transition:320,spawnMargin:48,cabinDoorX:-724,cabinMinX:-1008,...settings};
 const DAY=[['bakery','风从面包房来','large'],['balloon','把云寄给你','giant'],['cat','午睡的橘子','small'],['tree','一棵树的下午','large'],['windmill','风的邮局','giant']];
 const NIGHT=[['observatory','收集星光的人','giant'],['ufo','远道而来的朋友','giant'],['lamp','晚归的一盏灯','medium'],['mushroom','月光小屋','large'],['fox','睡前的好梦','small']];
 const builtinCatalog=[...DAY.map(a=>[...a,'day']),...NIGHT.map(a=>[...a,'night'])].map(([id,title,size,phase])=>({id,title,size,phase,author:'Lin',airborne:['balloon','ufo'].includes(id)}));
@@ -12,12 +13,12 @@ class World{
  constructor(options={}){this.catalog=options.catalog||builtinCatalog;this.candidate=options.candidate||null;this.preview=!!options.preview;this.reset()}
  reset(){this.x=0;this.distance=0;this.passed=0;this.locked=false;this.direction=1;this.walking=false;this.scenes=[];this.nextOrdinal=1;this.nextX=370;this.transitions=[];this.stableNight=0;this.completedNights=0;this.houseOpen=false;this.seed=17;this.recent=[];this.populate()}
  populate(){if(this.preview){if(!this.scenes.length)this.scenes=[{ordinal:1,x:370,passX:690,phase:this.candidate?.phase||'day',art:this.candidate||{id:'tree',title:'一棵树的下午',size:'large'},passed:false}];return}
- while(this.nextX<this.x+CFG.width+CFG.stride*2){const ordinal=this.nextOrdinal,phase=Math.floor((ordinal-1)/5)%2?'night':'day';
- let pool=this.catalog.filter(a=>a.phase===phase);if(!pool.length)pool=builtinCatalog.filter(a=>a.phase===phase);
+ while(this.nextX<this.x+CFG.width+CFG.stride*2){const ordinal=this.nextOrdinal,phase=Math.floor((ordinal-1)/CFG.scenesPerPhase)%2?'night':'day';
+ let pool=this.catalog.filter(a=>a.phase===phase);if(!pool.length){this.nextX+=CFG.stride;this.nextOrdinal++;if(ordinal%CFG.scenesPerPhase===0){const start=this.nextX-320,end=start+CFG.transition;this.transitions.push({start,end,from:phase,to:phase==='day'?'night':'day',ordinal})}continue}
  let choices=pool.filter(a=>!this.recent.includes(a.id));if(!choices.length)choices=pool;
  const art=ordinal===1?(pool.find(a=>a.id==='bakery')||pool[0]):choices[Math.floor(noise(this.seed++)*choices.length)];this.recent.push(art.id);if(this.recent.length>8)this.recent.shift();
  const scene={ordinal,x:this.nextX,passX:this.nextX+320,phase,art,passed:false};this.scenes.push(scene);
- if(ordinal%5===0){const start=scene.passX+CFG.playerX+CFG.recycleMargin,end=start+CFG.transition;this.transitions.push({start,end,from:phase,to:phase==='day'?'night':'day',ordinal});this.nextX=end+CFG.width-CFG.playerX+CFG.spawnMargin}else this.nextX+=CFG.stride;this.nextOrdinal++;
+ if(ordinal%CFG.scenesPerPhase===0){const start=scene.passX+CFG.playerX+CFG.recycleMargin,end=start+CFG.transition;this.transitions.push({start,end,from:phase,to:phase==='day'?'night':'day',ordinal});this.nextX=end+CFG.width-CFG.playerX+CFG.spawnMargin}else this.nextX+=CFG.stride;this.nextOrdinal++;
  }
  }
  update(dt,input){if(this.houseOpen){this.walking=false;return 0}dt=clamp(dt,0,.05);let dir=(input.right?1:0)-(input.left?1:0);if(this.locked&&dir<0)dir=0;const old=this.x;this.x=Math.max(this.preview?0:CFG.cabinMinX,this.x+dir*CFG.speed*dt);if(this.preview)this.x=Math.min(1000,this.x);this.walking=this.x!==old;if(this.walking)this.direction=dir;this.distance+=Math.abs(this.x-old);const before=this.passed;
@@ -98,7 +99,7 @@ function sprite(id){if(spriteCache.has(id))return spriteCache.get(id);const c=do
  }
  spriteCache.set(id,c);return c;
 }
-function placement(art){const size={small:64,medium:128,large:224,giant:320}[art.size]||128;return {size,x:(320-size)/2,y:CFG.ground-size-(art.airborne?96:0)}}
+function placement(art){const size={small:64,medium:128,large:224,giant:320}[art.size]||128;return {size,x:(320-size)/2,y:CFG.ground-size-(art.airborne?CFG.airborneOffset:0)}}
 // Normalize built-in pieces to the same 160px transparent tile used by uploads.
 // This keeps every displayed pixel on a consistent 2-world-unit grid.
 const artworkCache=new Map();
@@ -126,7 +127,7 @@ class Renderer{
  rect(g,0,400,960,34,pal.grass);rect(g,0,428,960,8,pal.grass2);rect(g,0,436,960,8,pal.earth);rect(g,0,444,960,50,pal.road);rect(g,0,490,960,8,pal.road2);rect(g,0,498,960,42,pal.front);
  for(let i=0;i<135;i++){const wx=Math.floor(viewX/37)*37+i*37-150,sx=wx-viewX;const yy=404+noise(wx+11)*23;rect(g,sx,yy,4+noise(wx)*9,2,noise(wx+4)>.5?pal.grass2:mix(pal.grass,'#cfdb95',.25));if(i%4===0){rect(g,sx,yy-5,2,5,pal.grass2);rect(g,sx-2,yy-6,5,3,mix('#eee3a2','#9fbd9a',n))}rect(g,sx+noise(wx+3)*23,452+noise(wx+7)*34,4+noise(wx+6)*12,2,noise(wx+2)>.5?pal.road2:mix(pal.road,'#e8d8ac',.5))}
  if(w.inCabinPage){g.drawImage(sprite('hut'),240,152,280,280);rect(g,358,427,43,6,pal.road2);rect(g,250,431,260,4,pal.grass2)}
- for(const scene of w.scenes){const sx=scene.x-viewX+144;if(sx>1030||sx+320<-80)continue;const a=scene.art,p=placement(a);if(!a.airborne){g.globalAlpha=.15;rect(g,sx+160-p.size*.4,429,p.size*.8,6,'#243f35');g.globalAlpha=1}g.drawImage(artworkBitmap(a),Math.round(sx/2)*2,CFG.ground-320-(a.airborne?96:0),320,320);if(n>.2&&['lamp','mushroom','observatory'].includes(a.id)){g.globalAlpha=n*.14;rect(g,sx+p.x+p.size*.25,p.y+p.size*.4,p.size*.5,p.size*.5,'#ffe8a2');g.globalAlpha=1}}
+ for(const scene of w.scenes){const sx=scene.x-viewX+144;if(sx>1030||sx+320<-80)continue;const a=scene.art,p=placement(a);if(!a.airborne){g.globalAlpha=.15;rect(g,sx+160-p.size*.4,429,p.size*.8,6,'#243f35');g.globalAlpha=1}g.drawImage(artworkBitmap(a),Math.round(sx/2)*2,CFG.ground-320-(a.airborne?CFG.airborneOffset:0),320,320);if(n>.2&&['lamp','mushroom','observatory'].includes(a.id)){g.globalAlpha=n*.14;rect(g,sx+p.x+p.size*.25,p.y+p.size*.4,p.size*.5,p.size*.5,'#ffe8a2');g.globalAlpha=1}}
  this.player(time,n);
  for(let i=0;i<33;i++){const wx=Math.floor(viewX/41)*41+i*41-80,sx=wx-viewX;const yy=501+noise(wx)*35;rect(g,sx,yy,3,8,mix('#63865a','#385e4c',n));rect(g,sx+4,yy+4,7,2,mix('#75955e','#416951',n));if(i%5===0){rect(g,sx+7,yy-1,4,4,mix('#d5c681','#6e9773',n))}}
  if(n>.25&&!this.reduced){g.globalAlpha=n*.7;for(let i=0;i<9;i++){const x=((noise(i+6)*1200-viewX*.8)%1100+1100)%1100,y=345+noise(i+22)*80+Math.sin(time/1000+i)*7;rect(g,x,y,2,2,'#f1dfa0')}g.globalAlpha=1}
@@ -134,5 +135,5 @@ class Renderer{
  }
  player(time,night){const g=this.g,w=this.world,x=Math.round(w.playerScreenX),step=w.walking?Math.floor(w.distance/8)%4:0,bob=w.walking&&step%2?2:0,y=432-bob;g.save();g.translate(x,y);if(w.direction<0)g.scale(-1,1);g.globalAlpha=.16;rect(g,-14,0,30,4,'#1e392b');g.globalAlpha=1;const shoe='#384c49',pants='#58666b';rect(g,-7,-16,6,12,pants);rect(g,3,-16,6,12,pants);rect(g,-9-(step===1?4:0),-5,10,5,shoe);rect(g,2+(step===3?4:0),-5,10,5,shoe);rect(g,-10,-31,20,19,'#d1a557');rect(g,-15,-31,7,17,'#6e7960');rect(g,-16,-29,3,12,'#9ba280');rect(g,9,-27,5,13,'#e2bf8b');rect(g,-8,-44,20,16,'#e8c697');rect(g,-9,-45,22,7,'#574c41');rect(g,-10,-44,5,15,'#574c41');rect(g,8,-37,3,3,'#354d46');rect(g,-10,-48,23,7,'#b16f50');rect(g,-5,-52,15,6,'#c8875b');rect(g,-15,-43,32,4,'#d8a270');rect(g,-8,-30,20,4,'#a56c4b');g.restore()}
 }
-root.PixelWalk={acceptsGameKeys,builtinCatalog,artworkBitmap,CFG,World,Renderer,TravelControls,filterContributors,sprite,placement,clamp,spriteCache,MOON_PHASES,drawMoon};if(typeof module!=='undefined')module.exports={acceptsGameKeys,CFG,World,TravelControls,filterContributors,placement,MOON_PHASES,drawMoon};
+root.PixelWalk={acceptsGameKeys,builtinCatalog,artworkBitmap,CFG,World,Renderer,TravelControls,filterContributors,sprite,placement,clamp,spriteCache,MOON_PHASES,drawMoon};if(typeof module!=='undefined')module.exports={acceptsGameKeys,builtinCatalog,CFG,World,TravelControls,filterContributors,placement,MOON_PHASES,drawMoon};
 })(typeof window!=='undefined'?window:globalThis);

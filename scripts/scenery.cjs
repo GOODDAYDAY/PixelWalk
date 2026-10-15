@@ -62,7 +62,7 @@ async function review(){
  issue=await api('GET',`/issues/${issue.number}`);
  if(issue.pull_request||!issue.labels.some(l=>l.name==='scenery')||(action==='approve'&&issue.state!=='open'))return output('changed','false');
  const manifest=readManifest(),existing=manifest.items.find(i=>i.issue===issue.number);
- if(existing?.status==='published'){await comment(issue.number,'这件作品已经投放，无需重复审核。');return output('changed','false')}
+ if(existing&&['published','archived'].includes(existing.status)){await comment(issue.number,'这件作品已经投放，无需重复审核。');return output('changed','false')}
 
  if(action==='reject'){
   if(existing){manifest.items=manifest.items.filter(i=>i!==existing);fs.rmSync(path.join(root,existing.file),{force:true});writeAll(manifest)}
@@ -88,7 +88,7 @@ async function publish(){
  for(const i of queued){i.status='published';i.publishedAt=at}
  // Published here means included in the candidate build, not proof of deployment.
  // Retry every unannounced item, including after a failed deploy or notification.
- const pending=manifest.items.filter(i=>i.status==='published'&&!i.announcedAt);
+ const pending=manifest.items.filter(i=>i.status==='published'&&i.issue&&!i.announcedAt);
  if(!pending.length){console.log('queue empty');return output('changed','false')}
  writeAll(manifest);output('changed','true');output('issues',pending.map(i=>i.issue).join(' '));
 }

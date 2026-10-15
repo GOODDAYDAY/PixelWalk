@@ -32,7 +32,7 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>{inputs.left.delete(e.code);inputs.right.delete(e.code)});
 window.addEventListener('blur',clearInput);document.addEventListener('visibilitychange',()=>{clearInput();bgm.setActive(!document.hidden&&['/','/contribute'].includes(currentRoute))});
-function route(){clearInput();if(travel.immersive)setImmersive(false);if($('#credits-dialog').open)closeCredits();if($('#music-dialog').open)$('#music-dialog').close();currentRoute=location.hash.slice(1)||'/';if(!['/','/contribute'].includes(currentRoute)){location.hash='/';return}$('#play-page').hidden=currentRoute!=='/';$('#contribute-page').hidden=currentRoute!=='/contribute';bgm.setActive(!document.hidden);document.body.classList.toggle('management-open',currentRoute!=='/');window.scrollTo(0,0);currentCanvas().focus({preventScroll:true})}
+function route(){clearInput();if(travel.immersive)setImmersive(false);if($('#credits-dialog').open)closeCredits();if($('#music-dialog').open)$('#music-dialog').close();currentRoute=location.hash.slice(1)||'/';if(currentRoute==='/admin'){location.replace('admin/');return}if(!['/','/contribute'].includes(currentRoute)){location.hash='/';return}$('#play-page').hidden=currentRoute!=='/';$('#contribute-page').hidden=currentRoute!=='/contribute';bgm.setActive(!document.hidden);document.body.classList.toggle('management-open',currentRoute!=='/');window.scrollTo(0,0);currentCanvas().focus({preventScroll:true})}
 window.addEventListener('hashchange',route);route();
 $('#immersive-button').onclick=()=>setImmersive(true);
 // Touch controls live on the scene, leaving the game free of direction buttons.

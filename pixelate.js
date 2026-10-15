@@ -5,8 +5,9 @@
 (function(root){
 'use strict';
 const TILE=160;
+const settings=(root.PixelWalkConfig||(typeof require==='function'?require('./settings.js'):null)).values;
 // Per size: on-tile max extent, art-pixel block (tile px), palette size.
-const SIZES={small:{max:32,block:2,colors:7},medium:{max:64,block:3,colors:10},large:{max:112,block:4,colors:12},giant:{max:160,block:5,colors:14}};
+const SIZES={small:{max:32,block:2,colors:settings.colorsSmall},medium:{max:64,block:3,colors:settings.colorsMedium},large:{max:112,block:4,colors:settings.colorsLarge},giant:{max:160,block:5,colors:settings.colorsGiant}};
 
 /* ---------- colour ---------- */
 const toLin=c=>{c/=255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4};

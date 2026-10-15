@@ -108,8 +108,8 @@ const emptyManifest=()=>({version:1,items:[]});
 function published(manifest){return manifest.items.filter(i=>i.status==='published').sort((a,b)=>String(a.publishedAt).localeCompare(String(b.publishedAt))||a.issue-b.issue)}
 function content(manifest,imageFor=item=>item.file){
  const items=published(manifest),seen=new Set(),contributors=[];
- for(const i of items)if(!seen.has(String(i.userId))){seen.add(String(i.userId));contributors.push({userId:i.userId,name:i.login,github:i.login})}
- return {contributors,scenery:items.map(i=>({id:'gh-'+i.issue,title:i.title,phase:i.phase,size:i.size,airborne:!!i.airborne,author:'@'+i.login,github:i.login,image:imageFor(i)}))};
+ for(const i of items)if(!seen.has(String(i.userId??i.authorName??i.id))){seen.add(String(i.userId??i.authorName??i.id));contributors.push({userId:i.userId??i.authorName??i.id,name:i.authorName||i.login,github:i.login||''})}
+ return {...(manifest.disabledBuiltins?.length?{disabledBuiltins:manifest.disabledBuiltins}:{}),contributors,scenery:items.map(i=>({id:i.id||'gh-'+i.issue,title:i.title,phase:i.phase,size:i.size,airborne:!!i.airborne,author:i.authorName||'@'+i.login,github:i.login||'',image:imageFor(i)}))};
 }
 function contentJs(data){
  // Escape "<" so the file stays safe when inlined into a <script> tag.
