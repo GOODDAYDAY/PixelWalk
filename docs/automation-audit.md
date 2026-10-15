@@ -59,6 +59,13 @@ The schedule moves off the hour to minutes 7/37 while retaining an approximately
 - 没有重新做浏览器交互、手机布局或持续性能测试；公网 HTTP 文件一致性不是交互验证。No fresh browser interaction, mobile layout, or sustained performance test; HTTP checks are not interaction checks.
 - Issue 评论/标签与 Git 提交不是原子事务；满 100 个等待任务仍可能取消；人工 push 与可复用批次部署之间仍有时序边界，操作时应避免同时修改同一批次文件。Issue/Git operations remain non-atomic; queues have a finite limit, and manual main pushes can still interleave with deployment timing.
 
+## 修复分支的 GitHub 验证 / Branch verification
+
+- 修复 / Changes：[PR #2](https://github.com/JilinJL/PixelWalk/pull/2)，草稿，尚未合并 / draft, not merged。
+- 代码提交 `d08d348` 的 push [Check 38772428251](https://github.com/JilinJL/PixelWalk/actions/runs/38772428251) 为 success，包含 35 项测试和两种构建 / succeeded with 35 tests and both builds。
+- 分支手动运行 [38772447715](https://github.com/JilinJL/PixelWalk/actions/runs/38772447715) 被 GitHub 正常接受，batch/deploy/announce 全部按 main 限制 skipped。证明此配置可注册、非 main 不执行生产任务；没有执行投放业务，也不是排队压力测试 / accepted by GitHub and all jobs intentionally skipped by the main-only guard; validates registration/guard behavior, not publishing or queue load。
+- GitHub 接受 queue 字段，actionlint 的提示属于其版本兼容范围；review 与普通 Pages 的同类配置尚未单独触发 / GitHub accepted the queue field; corresponding review/ordinary Pages configurations were not independently triggered。
+
 ## 官方依据 / Official references
 
 [并发与 queue / Concurrency](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency) · [调度排查 / Scheduling](https://docs.github.com/en/actions/how-tos/troubleshoot-workflows) · [GITHUB_TOKEN 触发行为 / Token-trigger behavior](https://docs.github.com/en/actions/concepts/security/github_token)。
