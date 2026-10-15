@@ -6,7 +6,7 @@ const {acceptsGameKeys}=require('../engine.js');
 
 function art(fill=(x,y)=>x>40&&x<120&&y>60?[120,160,90,255]:[0,0,0,0]){const rgba=Buffer.alloc(160*160*4);for(let y=0;y<160;y++)for(let x=0;x<160;x++)rgba.set(fill(x,y),(y*160+x)*4);return L.encodePng(160,160,rgba)}
 const URL1='https://github.com/user-attachments/assets/0f9c8a59-2b0a-4c41-9a0e-2d5a3b1c7e11';
-const body=(o={})=>`### 作品名称\n\n${o.title??'夜里的灯'}\n\n### 像素 PNG\n\n${o.image??`![PixelWalk](${URL1})`}\n\n### 展示时段\n\n${o.phase??'夜景'}\n\n### 体积\n\n${o.size??'中'}\n\n### 摆放方式\n\n${o.place??'空中'}\n\n### 素材来源\n\n原创\n`;
+const body=(o={})=>`### 作品名称\n\n${o.title??'夜里的灯'}\n\n### 像素 PNG\n\n${o.image??`![PixelWalk](${URL1})`}\n\n### 展示时段\n\n${o.phase??'夜景'}\n\n### 体积\n\n${o.size??'中'}\n\n### 摆放方式\n\n${o.place??'空中'}\n\n### 素材来源\n\n${o.source??'原创'}\n\n### 确认\n\n${o.confirm??`- [X] ${L.CONSENT}\n- [X] ${L.POLICY}`}\n`;
 
 test('D works after clicking toolbar buttons or before focusing the canvas; typing is left alone',()=>{
  assert.equal(acceptsGameKeys(null,false),true);
@@ -21,7 +21,7 @@ test('D works after clicking toolbar buttons or before focusing the canvas; typi
 });
 
 test('issue form parses into a scenery entry',()=>{
- assert.deepEqual(L.parseIssue(body()),{title:'夜里的灯',phase:'night',size:'medium',airborne:true,imageUrl:URL1,errors:[]});
+ assert.deepEqual(L.parseIssue(body()),{title:'夜里的灯',phase:'night',size:'medium',airborne:true,imageUrl:URL1,source:'原创',errors:[]});
  assert.equal(L.parseIssue(body({title:'<script>a</script>'+'x'.repeat(80)})).title.includes('<'),false);
  assert.ok(L.parseIssue(body({image:'nothing'})).errors.length);
  assert.ok(L.parseIssue(body({image:`${URL1} https://github.com/user-attachments/assets/1f9c8a59-2b0a-4c41-9a0e-2d5a3b1c7e11`})).errors.some(e=>e.includes('一张')));
@@ -57,16 +57,22 @@ function pipeline(){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pw-'));fs.mkdirSync(path.join(dir,'scripts'));
  for(const f of ['scenery.cjs','scenery-lib.cjs'])fs.copyFileSync(path.join(__dirname,'../scripts',f),path.join(dir,'scripts',f));
  const png=art(),calls=path.join(dir,'calls.json');fs.writeFileSync(calls,'[]');
+ const comments=path.join(dir,'comments.json');fs.writeFileSync(comments,'[]');
  const mock=path.join(dir,'mock.cjs');
  fs.writeFileSync(mock,`const fs=require('fs');const perms=${JSON.stringify({lin:'admin',helper:'write',stranger:'read'})};
  globalThis.fetch=async(url,opt={})=>{const log=JSON.parse(fs.readFileSync(${JSON.stringify(calls)}));log.push({url,method:opt.method||'GET',body:opt.body&&JSON.parse(opt.body)});fs.writeFileSync(${JSON.stringify(calls)},JSON.stringify(log));
+  if(process.env.FAIL_ROUTE&&url.includes(process.env.FAIL_ROUTE)&&(!process.env.FAIL_METHOD||opt.method===process.env.FAIL_METHOD))return {ok:false,status:Number(process.env.FAIL_STATUS||404),text:async()=>'test API failure'};
+  if(url.includes('user-attachments')&&process.env.REDIRECT_URL)return {ok:false,status:302,headers:{get:()=>process.env.REDIRECT_URL}};
   if(url.includes('user-attachments')){const b=Buffer.from(${JSON.stringify(png.toString('base64'))},'base64');return {ok:true,status:200,url,body:[b]}}
   const m=url.match(/collaborators\\/([^/]+)\\/permission/);if(m)return {ok:true,status:200,json:async()=>({permission:perms[m[1]]||'none'})};
+  if(opt.method==='GET'&&/issues\\/7$/.test(url))return {ok:true,status:200,json:async()=>JSON.parse(fs.readFileSync(process.env.CURRENT_ISSUE||process.env.GITHUB_EVENT_PATH)).issue};
+  if(url.includes('/comments?'))return {ok:true,status:200,json:async()=>JSON.parse(fs.readFileSync(${JSON.stringify(comments)}))};
+  if(url.endsWith('/comments')&&opt.method==='POST'){const list=JSON.parse(fs.readFileSync(${JSON.stringify(comments)}));list.push({user:{login:'github-actions[bot]'},body:JSON.parse(opt.body).body});fs.writeFileSync(${JSON.stringify(comments)},JSON.stringify(list))}
   return {ok:true,status:201,json:async()=>({})}};`);
  const run=(cmd,event,extra={})=>{const ev=path.join(dir,'event.json');if(event)fs.writeFileSync(ev,JSON.stringify(event));const out=path.join(dir,'out.txt');fs.writeFileSync(out,'');
   const r=spawnSync(process.execPath,['--require',mock,path.join(dir,'scripts/scenery.cjs'),cmd],{env:{...process.env,GITHUB_REPOSITORY:'JilinJL/PixelWalk',GITHUB_TOKEN:'t',GITHUB_EVENT_PATH:ev,GITHUB_OUTPUT:out,...extra},encoding:'utf8'});
-  assert.equal(r.status,0,r.stderr);return Object.fromEntries(fs.readFileSync(out,'utf8').trim().split('\n').filter(Boolean).map(l=>l.split('=')))};
- const ev=(by,text,author='alice')=>({issue:{number:7,body:body(),labels:[{name:'scenery'}],user:{login:author,id:42,type:'User'}},comment:{body:text,user:{login:by}}});
+  assert.equal(r.status,Number(extra.EXPECT_STATUS||0),r.stderr);if(r.status)return r;return Object.fromEntries(fs.readFileSync(out,'utf8').trim().split('\n').filter(Boolean).map(l=>l.split('=')))};
+ const ev=(by,text,author='alice')=>({issue:{number:7,body:body(),state:'open',labels:[{name:'scenery'}],user:{login:author,id:42,type:'User'}},comment:{body:text,user:{login:by}}});
  const manifest=()=>JSON.parse(fs.readFileSync(path.join(dir,'scenery/manifest.json'),'utf8'));
  const log=()=>JSON.parse(fs.readFileSync(calls,'utf8'));
  return {dir,run,ev,manifest,log};
@@ -83,8 +89,9 @@ test('only collaborators can approve; approval queues, the 30-minute batch publi
  const out=p.run('publish');assert.equal(out.changed,'true');assert.equal(out.issues,'7');
  m=p.manifest();assert.equal(m.items[0].status,'published');
  const js=fs.readFileSync(path.join(p.dir,'content.js'),'utf8');assert.ok(js.includes('"github": "alice"'));assert.ok(js.includes('scenery/images/gh-7.png'));
- assert.equal(p.run('publish').changed,'false');
+ assert.equal(p.run('publish').changed,'true','deployment not confirmed: retry');
  p.run('announce',null,{ISSUES:'7'});assert.ok(p.log().some(c=>c.method==='PATCH'&&c.body.state==='closed'));
+ assert.equal(p.run('publish').changed,'false');
 });
 
 test('reject removes a queued item and authors cannot approve their own work',()=>{
@@ -95,4 +102,74 @@ test('reject removes a queued item and authors cannot approve their own work',()
  assert.equal(p.manifest().items.length,0);assert.ok(!fs.existsSync(path.join(p.dir,'scenery/images/gh-7.png')));
  assert.ok(p.log().some(c=>c.body?.labels?.includes('needs-changes')));
  assert.ok(p.log().some(c=>String(c.body?.body).includes('边缘再清理一下')));
+});
+
+
+test('source and both consent checkboxes are enforced even for a manually created issue',()=>{
+ assert.ok(L.parseIssue(body({source:''})).errors.some(e=>e.includes('来源')));
+ assert.ok(L.parseIssue(body({confirm:''})).errors.some(e=>e.includes('勾选')));
+ assert.ok(L.parseIssue(body({confirm:`- [ ] ${L.CONSENT}\n- [X] ${L.POLICY}`})).errors.length);
+});
+
+test('current issue body and state replace the stale webhook snapshot',()=>{
+ const p=pipeline(),current=path.join(p.dir,'current.json'),event=p.ev('helper','/APPROVE');
+ fs.writeFileSync(current,JSON.stringify({...event,issue:{...event.issue,body:body({title:'最新作品'})}}));
+ p.run('review',event,{CURRENT_ISSUE:current});assert.equal(p.manifest().items[0].title,'最新作品');
+ assert.equal(p.manifest().items[0].source,'原创');assert.match(p.manifest().items[0].sha256,/^[a-f0-9]{64}$/);
+ fs.writeFileSync(current,JSON.stringify({...event,issue:{...event.issue,state:'closed'}}));
+ assert.equal(p.run('review',event,{CURRENT_ISSUE:current}).changed,'false');
+});
+
+test('API write failures fail the job; missing labels and absent reviewers are allowed',()=>{
+ const p=pipeline();
+ assert.equal(p.run('review',p.ev('helper','/approve'),{FAIL_ROUTE:'/permission',FAIL_STATUS:'404'}).changed,'false');
+ p.run('review',p.ev('helper','/approve'),{FAIL_ROUTE:'/labels/pending-review',FAIL_STATUS:'404'});
+ const failed=p.run('review',p.ev('helper','/approve'),{FAIL_ROUTE:'/comments',EXPECT_STATUS:'1'});
+ assert.match(failed.stderr,/404/);
+});
+
+test('reject removes queued snapshots; published snapshots require explicit repository removal',()=>{
+ const p=pipeline();p.run('review',p.ev('helper','/approve'));p.run('publish');
+ assert.equal(p.run('review',p.ev('lin','/reject')).changed,'false');
+ assert.equal(p.manifest().items[0].status,'published');
+});
+
+test('announcement retries do not duplicate comments after a later close failure',()=>{
+ const p=pipeline();p.run('review',p.ev('helper','/approve'));p.run('publish');
+ p.run('announce',null,{ISSUES:'7',FAIL_ROUTE:'/issues/7',FAIL_METHOD:'PATCH',EXPECT_STATUS:'1'});
+ assert.ok(!p.manifest().items[0].announcedAt);
+ assert.equal(p.run('publish').changed,'true');
+ p.run('announce',null,{ISSUES:'7'});
+ assert.equal(p.log().filter(c=>c.method==='POST'&&c.body?.body?.includes('pixelwalk-published:7')).length,1);
+ assert.ok(p.manifest().items[0].announcedAt);
+});
+
+test('attachment redirects are validated before fetching the destination',()=>{
+ const p=pipeline();
+ assert.equal(p.run('review',p.ev('helper','/approve'),{REDIRECT_URL:'http://127.0.0.1/private'}).changed,'false');
+ assert.ok(!p.log().some(c=>c.url.startsWith('http://127.0.0.1')));
+ assert.ok(p.log().some(c=>c.body?.body?.includes('附件域名')));
+});
+
+test('truncated headers and missing PNG terminators are rejected as validation errors',()=>{
+ const good=art();
+ for(const bad of [good.subarray(0,good.length-12),Buffer.concat([good,Buffer.from('junk')])])assert.throws(()=>L.sanitizePng(bad),e=>e.userFacing===true);
+ const header=Buffer.alloc(13);const short=Buffer.concat([good.subarray(0,8),header]);
+ assert.throws(()=>L.sanitizePng(short),e=>e.userFacing===true);
+});
+
+
+test('write authors cannot self-review; administrators have the documented exception',()=>{
+ const p=pipeline();
+ assert.equal(p.run('review',p.ev('helper','/approve','helper')).changed,'false');
+ assert.ok(!fs.existsSync(path.join(p.dir,'scenery/manifest.json')));
+ assert.equal(p.run('review',p.ev('lin','/approve','lin')).changed,'true');
+});
+
+test('one publish batch promotes every queued artwork and retries all unannounced candidates',()=>{
+ const p=pipeline();p.run('review',p.ev('helper','/approve'));
+ const file=path.join(p.dir,'scenery/manifest.json'),m=p.manifest();m.items.push({...m.items[0],issue:8});fs.writeFileSync(file,JSON.stringify(m));
+ assert.equal(p.run('publish').issues,'7 8');
+ assert.ok(p.manifest().items.every(i=>i.status==='published'));
+ assert.equal(p.run('publish').issues,'7 8');
 });

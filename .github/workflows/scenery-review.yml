@@ -11,13 +11,14 @@ permissions:
 concurrency:
   group: scenery-git
   cancel-in-progress: false
+  queue: max
 jobs:
   review:
     if: >-
       !github.event.issue.pull_request &&
-      contains(github.event.issue.labels.*.name, 'scenery') &&
-      (startsWith(github.event.comment.body, '/approve') || startsWith(github.event.comment.body, '/reject'))
+      contains(github.event.issue.labels.*.name, 'scenery')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:

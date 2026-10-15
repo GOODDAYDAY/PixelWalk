@@ -3,7 +3,7 @@ name: Scenery publish
 # then label/close the issues. An empty queue does nothing.
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '7,37 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -13,9 +13,12 @@ permissions:
 concurrency:
   group: scenery-git
   cancel-in-progress: false
+  queue: max
 jobs:
   batch:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       changed: ${{ steps.publish.outputs.changed }}
       issues: ${{ steps.publish.outputs.issues }}
@@ -45,8 +48,11 @@ jobs:
   announce:
     needs: [batch, deploy]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -54,3 +60,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUES: ${{ needs.batch.outputs.issues }}
+      - name: Save notification progress
+        run: bash scripts/commit-scenery.sh "scenery - record published notifications"

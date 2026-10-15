@@ -1,65 +1,57 @@
 # PixelWalk
 
-一个安静的像素漫游世界，带有日夜交替、四晚月相循环和本地风景创作。公开仓库：https://github.com/JilinJL/PixelWalk 。
+[在线游玩 / Play](https://jilinjl.github.io/PixelWalk/) · [风景投稿 / Submit scenery](https://github.com/JilinJL/PixelWalk/issues/new?template=scenery.yml) · [Actions](https://github.com/JilinJL/PixelWalk/actions)
 
-GitHub Pages 目标地址：[在线体验](https://jilinjl.github.io/PixelWalk/)，以 Actions 部署成功状态为准。部署与域名建议见 [部署与社区审核](docs/部署与社区审核.md)，投稿与社区审核方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+一个安静的像素漫游游戏：向右行走，欣赏日夜风景和四晚月相循环，也可以创作像素风景并投稿。没有分数、战斗或通关压力。
 
-无需 npm 安装或 API。最新独立文件：`outputs/PixelWalk-demo.html`，包含代码、像素素材与两首完整 BGM，可双击用浏览器打开。也可以 `npm run dev` 后访问 http://127.0.0.1:5173 。
+A quiet pixel walking game with day/night scenery and a four-night moon cycle. Walk, explore, and contribute your own scenery. There are no scores, battles, or win conditions. The current game UI and Issue form are in Chinese; English instructions are below.
 
-## 操作
+## 文档 / Documentation
 
-- 普通模式：按住 D / → 行走，松开停止；无需先点击画面，在输入框里打字时不触发。移动端按住画面右侧前进，按住左侧三分之一区域后退；不显示方向按钮。
-- 沉浸模式：点击“沉浸模式”，再按一次 D / → 自动向前；移动端点击画面开始。按 Esc 或双击画面退出并立即停止；移动端双击画面退出。沉浸画面不显示退出按钮或提示。失焦、切后台、切路由和打开弹层也会停下，返回后需再次按键。
-- 彩蛋屋：首景通过前按住 A / ←，角色先走到开局画面的最左边，越过边界才切入左侧独立的第 -1 页。继续走到木屋门口，按 W 或点击门前提示展开画卷；关闭画卷后站在原来的门口，按 D 返回。
-- 画卷作者是 Lin。鸣谢来自已投放风景的 GitHub 作者，显示 `@用户名` 并链接到 GitHub 主页，可搜索，长列表独立滚动。
-- BGM 按钮开启/关闭配乐。浏览器需要一次用户点击来允许声音；不会首次打开就强行播放。音乐信息按钮可查看来源与署名。
-- 月相按「新月 → 上弦月 → 满月 → 下弦月 → 新月」循环。第一晚是新月（微弱暗面），上弦右半亮、下弦左半亮；完整走过一晚、黎明过渡结束后推进一次，停留不变。
-- 刷新或重新出发会开始新旅程，月相也从新月重置。
+| 内容 / Topic | 中文 | English |
+| --- | --- | --- |
+| 游戏玩法、操作、彩蛋与音乐 / Gameplay | [玩法指南](docs/zh-CN/gameplay.md) | [Gameplay guide](docs/en/gameplay.md) |
+| 投稿格式、权限、人工审核 / Submission and moderation | [审核逻辑](docs/zh-CN/moderation.md) | [Moderation](docs/en/moderation.md) |
+| 定时投放、部署、失败恢复 / Publishing and recovery | [投放逻辑](docs/zh-CN/publishing.md) | [Publishing](docs/en/publishing.md) |
+| 色情、暴力、政治敏感等禁止内容 / Prohibited content | [内容规范](docs/zh-CN/content-policy.md) | [Content policy](docs/en/content-policy.md) |
+| 实际运行记录、已验证与未验证范围 / Audit evidence and limits | [双语检查报告](docs/automation-audit.md) | [Bilingual audit report](docs/automation-audit.md) |
 
-## 此次优化
+贡献入口见 [CONTRIBUTING.md](CONTRIBUTING.md)。托管现状见 [部署与社区审核](docs/部署与社区审核.md)。[旧开发设计](docs/EndlessWalk-开发文档.md) 是历史设计基线，可能包含未实现的功能；当前行为以代码和上表文档为准。
 
-移除了帮助入口、首页介绍与口号、日夜文字标签、距离/景点 HUD、右下角进度点和底部文案。普通模式左下角仅保留小尺寸的作品名与作者；底部控件已移除，沉浸与 BGM 入口放在顶部。界面不再提示彩蛋屋入口。
+See [CONTRIBUTING.md](CONTRIBUTING.md) for a short contribution checklist. The older design document contains historical proposals, including unimplemented features.
 
-固定逻辑视野 960×540，速度仍为 80 世界单位/秒。普通景点起点相距 1328（960 视野 + 320 素材容器 + 48 留白），保证整个素材容器也不会两件同框；普通景点周期约 16.6 秒。每五景切换日夜，旧景离屏后完成距离驱动的过渡，下一组从右侧进入。首轮进入夜间约 82 秒。
+## 快速操作 / Quick controls
 
-渲染取消整幅画面 480×270 降采样再放大；直接绘制 960×540。内置景物和上传结果都规范到 160×160 透明素材容器，以 2 世界单位的像素网格拼接。关闭图像插值，无模糊滤镜，作品与背景独立绘制。
+- 按住 D / → 前进，松开停止；普通模式可用 A / ← 后退，但通过首景后不能倒退。移动端按住画面右侧前进、左侧三分之一后退。
+- Hold D / → to walk; release to stop. A / ← moves backward only before passing the first scenery. On touch screens, hold the right area to advance or the left third to go back.
+- 点击「沉浸模式」后按 D / →（手机点击画面）开始自动行走；Esc 或双击画面退出并停止。
+- Select 沉浸模式 (immersive mode), then press D / → or tap the scene to cruise. Escape or double-click/tap exits and stops.
+- 「参与设计」选择 PNG / WebP，自动像素化并试玩；「投稿」下载 PNG 并打开 GitHub Issue，仍需手动附图、填写来源并确认规范。
+- Open 参与设计 (design), choose PNG / WebP and preview the pixel art. 投稿 (submit) downloads the PNG and opens an Issue form; attach the downloaded file, describe its source, and confirm the policy.
 
-上传图片由 `pixelate.js` 转成像素画，而不是简单缩小：裁出主体 → 按体积落到粗像素网格（S/M/L/XL 每格 2/3/4/5 像素）→ 在 OKLab 色彩空间用 k-means 为这张图选 7–14 色调色板 → 每格取出现最多的颜色（不做平均，不产生过渡色）→ 清除孤立噪点、补针孔 → 描一圈深色轮廓 → 最近邻整数放大。结果是硬边、少色、方块均匀的 160×160 透明 PNG。
+## 社区流程 / Community pipeline
 
-## 日夜音乐
+投稿 Issue → 协作者人工检查 → `/approve` → 保存 PNG 快照入队 → 约每 30 分钟批量构建与 Pages 部署 → 成功后标记 `published` 并关闭 Issue。
 
-- 白天：**Childhood** — Scott Buckley（2:17），钢琴与弦乐。
-- 夜晚：**Moonlight** — Scott Buckley（4:14），钢琴、弦乐的怀旧氛围。
-- 两首都采用作者提供的 **CC BY 4.0** 授权，完整出处和修改记录在 `assets/audio/LICENSE.md`，页面音乐面板和画卷中也保留署名。
-- 完整原曲转码为 160 kb/s 立体声 AAC，默认播放音量 0.1，音乐信息弹窗（ⓘ）可在 0–30% 调整，日夜过渡采用等功率交叉淡化。未裁成几秒样本。隐藏标签页 / 离开游玩和试玩页时暂停。
-- 独立 HTML 内嵌两首音频，约 10 MB；运行时不向第三方请求音乐。
+Issue submission → human review by a collaborator → `/approve` → queued PNG snapshot → batch build and Pages deployment about every 30 minutes → `published` label and closed Issue after successful deployment.
 
-曲目来源：
-- https://www.scottbuckley.com.au/library/childhood/
-- https://www.scottbuckley.com.au/library/moonlight/
-- https://creativecommons.org/licenses/by/4.0/
+**没有 AI 内容审核或自动识别黄暴政治内容的功能。** 程序只检查权限、表单与 PNG 格式；维护者必须检查图片、作品名、来源和链接。[内容规范](docs/zh-CN/content-policy.md) 适用于全部投稿，AI 辅助作品也不例外。
 
-## 开发
+**There is no AI content moderation.** Automation checks permissions, form fields, and PNG structure. Maintainers must inspect the image, title, source, and links against the [content policy](docs/en/content-policy.md), including AI-assisted work.
 
-- `npm run dev`：Python 3 静态服务，端口 5173；修改后刷新。
-- `npm run build`：Node.js 生成内嵌 CSS / JS / BGM 的单文件 HTML。
-- `npm run build:site`：生成仅包含运行资源的 `dist/`，适配 Pages 项目子路径和普通静态服务器。
-- `npm test`：核心规则测试，包含五晚月相循环、暂停与重置、上下弦朝向；音量断言已同步至默认 10%。
+## 本地开发 / Local development
 
-`engine.js` 负责世界与共享渲染；`app.js` 负责输入、页面、画卷和图片预览；`music.js` 负责音轨播放及交叉淡化；`content.js` 是生成的公开风景与鸣谢；`pixelate.js` 是像素化算法；logo 与图标由 `node scripts/make-logo.cjs` 从同一张 16×16 像素图生成到 `assets/`；`library.js` 合并内置与社区风景并保存音量；`scripts/scenery*.cjs` 是投稿审核与投放管线。
+Node.js 24+，Python 3；无需安装 npm 依赖或配置外部 API。Node.js 24+ and Python 3 are required; no npm dependencies or external API credentials are needed for local builds.
 
-## 社区风景
+```sh
+npm run dev         # http://127.0.0.1:5173
+npm test
+npm run build:site  # dist/ for static hosting
+npm run build       # outputs/PixelWalk-demo.html, generated locally
+```
 
-投稿到上线全部在 GitHub 上完成，详见 [CONTRIBUTING.md](CONTRIBUTING.md)：
+独立 HTML 需要先构建，不是仓库自带下载。`content.js` 由 `scenery/manifest.json` 生成；管线正常运行时请勿手改。Only generated published scenery ships in the site build. The standalone HTML is a local build output, not a checked-in download.
 
-1. 「参与设计」页选图，自动像素化并试玩，点「投稿」会下载 PNG 并打开预填好的 Issue 表单（需登录 GitHub）。
-2. 仓库协作者（write 及以上）在 Issue 评论 `/approve` 或 `/reject 理由`。非协作者的指令会被忽略，作者不能审核自己的投稿。
-3. 通过后 `scenery-review` 工作流校验并重新编码 PNG，存入 `scenery/images/`，在 `scenery/manifest.json` 中排队。
-4. `scenery-publish` 每 30 分钟把队列中所有作品一次放出：生成 `content.js`、提交、部署 Pages，部署成功后给 Issue 打 `published` 并关闭。
-5. 木屋鸣谢按 GitHub 账号去重，显示 `@用户名`，链接到其 GitHub 主页。
+`engine.js`：世界与渲染 / world and rendering；`app.js`：交互与投稿预览 / input and submission preview；`pixelate.js`：像素化 / pixel conversion；`music.js`：音乐 / music；`scripts/scenery*.cjs`：审核与投放 / moderation and publishing。
 
-`content.js` 由 `node scripts/scenery.cjs content` 生成，不要手改。
-
-## 验证边界
-
-审核与投放管线以模拟 GitHub API 的端到端测试覆盖（`tests/scenery.test.cjs`），首次真实运行请以 Actions 日志为准。此前的漫游与画卷验证记录见 `work/verification-v2.md`。模拟时长不等于浏览器持续性能实测。内置浏览器不允许导航 file://，独立 HTML 通过本地 HTTP 测试；文件协议下的持久化和音频策略仍取决于用户的浏览器。
+音乐：Scott Buckley 的 Childhood 与 Moonlight，CC BY 4.0。完整署名、来源和转码说明见 [音乐许可 / Music license](assets/audio/LICENSE.md)。
