@@ -16,16 +16,19 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
+  queue: max
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || github.sha }}
+          ref: ${{ inputs.ref || 'main' }}
       - uses: actions/setup-node@v7
         with:
           node-version: '24'

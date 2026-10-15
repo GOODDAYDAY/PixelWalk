@@ -5,7 +5,7 @@ labels: [scenery, pending-review]
 body:
   - type: markdown
     attributes:
-      value: 把下载的 PNG 拖入下方。署名为你的 GitHub 账号。
+      value: "把下载的 PNG 拖入下方。署名为你的 GitHub 账号。投稿前阅读 [内容规范 / Content policy](https://github.com/JilinJL/PixelWalk/blob/main/docs/zh-CN/content-policy.md)。表单暂用中文；英文说明见 CONTRIBUTING.md。"
   - type: input
     id: work-title
     attributes:
@@ -53,4 +53,6 @@ body:
       label: 确认
       options:
         - label: 我有权公开此作品，并允许 PixelWalk 署名展示与分发。
+          required: true
+        - label: 我已阅读内容规范，确认作品、名称与来源不含禁止内容。
           required: true
