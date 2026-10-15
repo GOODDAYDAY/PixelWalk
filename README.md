@@ -46,7 +46,7 @@ GitHub Pages 目标地址：[在线体验](https://jilinjl.github.io/PixelWalk/)
 - `npm run build:site`：生成仅包含运行资源的 `dist/`，适配 Pages 项目子路径和普通静态服务器。
 - `npm test`：核心规则测试，包含五晚月相循环、暂停与重置、上下弦朝向；音量断言已同步至默认 10%。
 
-`engine.js` 负责世界与共享渲染；`app.js` 负责输入、页面、画卷和图片预览；`music.js` 负责音轨播放及交叉淡化；`content.js` 是生成的公开风景与鸣谢；`pixelate.js` 是像素化算法；`library.js` 合并内置与社区风景并保存音量；`scripts/scenery*.cjs` 是投稿审核与投放管线。
+`engine.js` 负责世界与共享渲染；`app.js` 负责输入、页面、画卷和图片预览；`music.js` 负责音轨播放及交叉淡化；`content.js` 是生成的公开风景与鸣谢；`pixelate.js` 是像素化算法；logo 与图标由 `node scripts/make-logo.cjs` 从同一张 16×16 像素图生成到 `assets/`；`library.js` 合并内置与社区风景并保存音量；`scripts/scenery*.cjs` 是投稿审核与投放管线。
 
 ## 社区风景
 

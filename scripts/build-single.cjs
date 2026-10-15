@@ -11,6 +11,8 @@ for(const track of ['childhood','moonlight']){
  const source=`assets/audio/${track}.m4a`;
  html=html.replace(`src="${source}"`,()=>`src="data:audio/mp4;base64,${fs.readFileSync(path.join(root,source)).toString('base64')}"`);
 }
+// Inline logo and icons so the single file needs no assets folder.
+for(const [file,type] of [['assets/logo.svg','image/svg+xml'],['assets/favicon.svg','image/svg+xml'],['assets/icon-32.png','image/png'],['assets/apple-touch-icon.png','image/png']])html=html.split(`"${file}"`).join(`"data:${type};base64,${fs.readFileSync(path.join(root,file)).toString('base64')}"`);
 fs.mkdirSync(path.join(root,'outputs'),{recursive:true});
 fs.writeFileSync(path.join(root,'outputs/PixelWalk-demo.html'),html);
 console.log('Generated outputs/PixelWalk-demo.html — scripts, styles and two complete music tracks embedded.');
