@@ -4,7 +4,7 @@
 
 A tree, a cat, a tiny cabin, or something you would like a traveler to discover. Start with an image—you do not need to edit code.
 
-[Open the studio](https://jilinjl.github.io/PixelWalk/#/contribute) · [Browse submissions](https://github.com/JilinJL/PixelWalk/issues?q=is%3Aissue+label%3Ascenery) · [Content policy](docs/en/content-policy.md)
+[Open the studio](https://pixelwalk.fun/#/contribute) · [Browse submissions](https://github.com/JilinJL/PixelWalk/issues?q=is%3Aissue+label%3Ascenery) · [Content policy](docs/en/content-policy.md)
 
 ![Actual studio preview with the built-in cat example and the traveler](docs/images/studio-preview.png)
 

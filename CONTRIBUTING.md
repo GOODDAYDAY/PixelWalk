@@ -4,7 +4,7 @@
 
 一棵树、一栋小屋，或一件你想让旅人偶然遇见的东西。
 
-[打开创作页](https://jilinjl.github.io/PixelWalk/#/contribute) · [查看投稿](https://github.com/JilinJL/PixelWalk/issues?q=is%3Aissue+label%3Ascenery) · [内容规范](docs/zh-CN/content-policy.md)
+[打开创作页](https://pixelwalk.fun/#/contribute) · [查看投稿](https://github.com/JilinJL/PixelWalk/issues?q=is%3Aissue+label%3Ascenery) · [内容规范](docs/zh-CN/content-policy.md)
 
 ![创作页的实际预览：内置小猫示例与旅人同处原野](docs/images/studio-preview.png)
 

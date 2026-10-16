@@ -2,7 +2,15 @@
 
 **简体中文** · [English](../en/deployment.md) · [返回首页](../../README.md)
 
-PixelWalk 当前部署在 [GitHub Pages](https://jilinjl.github.io/PixelWalk/)，源代码位于 [JilinJL/PixelWalk](https://github.com/JilinJL/PixelWalk)。2026-10-16 检查时，Pages 使用工作流构建、已启用 HTTPS、没有自定义域名，发布环境只接受 main。
+PixelWalk 当前部署在 [GitHub Pages](https://pixelwalk.fun/)，源代码位于 [JilinJL/PixelWalk](https://github.com/JilinJL/PixelWalk)。2026-10-16 检查时，Pages 使用工作流构建、已启用 HTTPS、发布环境只接受 main。2026-10-16 起改用自定义域名 `pixelwalk.fun`，详见下文。
+
+## 自定义域名
+
+公开地址使用自定义域名 `pixelwalk.fun`，GitHub Pages 的默认地址 `jilinjl.github.io/PixelWalk/` 仍可访问并自动跳转。域名与 DNS 由阿里云管理，NS 使用 `dns1.hichina.com` 与 `dns2.hichina.com`，不需要额外改动。
+
+因为使用工作流构建，Pages 设置里的域名不会自动写进上传的产物，所以 `scripts/build-site.cjs` 会在 `dist/` 中生成 `CNAME` 文件，内容取自 `PIXELWALK_DOMAIN`，默认 `pixelwalk.fun`。改域名时同步更新这个默认值和 Pages 设置。
+
+线上管理后台的「线上校验」会访问线上站点比对 `content.js`、`world-settings.js` 和图片摘要，目标地址由 `PIXELWALK_SITE_URL` 决定，默认 `https://pixelwalk.fun/`。
 
 ## 图片与数据放在哪里
 

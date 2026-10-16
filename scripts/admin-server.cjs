@@ -11,6 +11,9 @@ function gh(args,input){return new Promise((resolve,reject)=>{
  });if(input!==undefined)p.stdin.end(JSON.stringify(input));else p.stdin.end();
 })}
 const api=(route,method='GET',body)=>gh(['api','repos/'+A.REPO+route,...(method!=='GET'?['--method',method]:[]),...(body!==undefined?['--input','-']:[])],body);
+// Live site base used by /api/verify. Override with PIXELWALK_SITE_URL when the
+// custom domain changes; the trailing slash is required because paths are appended.
+const siteBase=(process.env.PIXELWALK_SITE_URL||'https://pixelwalk.fun/').replace(/\/+$/,'')+'/';
 async function owner(){const user=await gh(['api','user']);if(user.id!==A.OWNER_ID)throw Error('当前 gh 账号为 '+user.login+'，请切换到 JilinJL：gh auth switch --user JilinJL');const repo=await api('');if(!repo.permissions?.admin)throw Error('主账号没有仓库管理权限');return {login:user.login,id:user.id}}
 async function file(name,ref,optional=false){
  try{const f=await api('/contents/'+name+'?ref='+encodeURIComponent(ref));return Buffer.from(f.content,'base64')}
@@ -55,7 +58,7 @@ function createServer(deps={}){
      if(u.pathname==='/api/issues'){const issues=await api('/issues?state=all&labels=scenery&per_page=100');return send(200,issues.filter(i=>!i.pull_request).map(i=>({number:i.number,title:i.title,state:i.state,login:i.user.login,url:i.html_url,labels:i.labels.map(l=>l.name),body:i.body}))) }
      if(u.pathname==='/api/runs'){const r=await api('/actions/runs?per_page=20');return send(200,r.workflow_runs.map(i=>({id:i.id,name:i.name,status:i.status,conclusion:i.conclusion,sha:i.head_sha,url:i.html_url,at:i.created_at}))) }
      if(u.pathname==='/api/verify'){
-      const s=await getState(),base='https://jilinjl.github.io/PixelWalk/',expected=L.contentJs(L.content(s.manifest));
+     const s=await getState(),base=siteBase,expected=L.contentJs(L.content(s.manifest));
       const response=await fetch(base+'content.js?t='+Date.now(),{signal:AbortSignal.timeout(15000)});
       const settings=await fetch(base+'world-settings.js?t='+Date.now(),{signal:AbortSignal.timeout(15000)});
       const text=await response.text(),settingsText=await settings.text();

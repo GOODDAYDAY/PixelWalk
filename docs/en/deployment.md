@@ -2,7 +2,15 @@
 
 [简体中文](../zh-CN/deployment.md) · **English** · [Home](../../README.en.md)
 
-PixelWalk is hosted on [GitHub Pages](https://jilinjl.github.io/PixelWalk/), with source in [JilinJL/PixelWalk](https://github.com/JilinJL/PixelWalk). The 2026-10-16 inspection confirmed workflow builds, HTTPS, no custom domain, and a deployment environment restricted to main.
+PixelWalk is hosted on [GitHub Pages](https://pixelwalk.fun/), with source in [JilinJL/PixelWalk](https://github.com/JilinJL/PixelWalk). The 2026-10-16 inspection confirmed workflow builds, HTTPS, no custom domain, and a deployment environment restricted to main.
+
+## Custom domain
+
+The public address uses the custom domain `pixelwalk.fun`. The default GitHub Pages address `jilinjl.github.io/PixelWalk/` still works and redirects automatically. The domain and its DNS are managed at Alibaba Cloud, using the `dns1.hichina.com` and `dns2.hichina.com` nameservers, so no NS migration is needed.
+
+Because the site builds through a workflow, the domain set in the Pages settings is not injected into the uploaded artifact. `scripts/build-site.cjs` therefore writes a `CNAME` file into `dist/`, using `PIXELWALK_DOMAIN`, which defaults to `pixelwalk.fun`. Update both that default and the Pages setting when the domain changes.
+
+The live verification in the owner console fetches the deployed site to compare `content.js`, `world-settings.js`, and image digests. Its target comes from `PIXELWALK_SITE_URL`, which defaults to `https://pixelwalk.fun/`.
 
 ## Where images and data live
 

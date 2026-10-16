@@ -4,7 +4,7 @@
 
 Take a walk. Find a little scenery. A quiet pixel world with changing light, moon phases, hidden surprises—and room for something you create.
 
-[Start walking](https://jilinjl.github.io/PixelWalk/) · [Contribute scenery](CONTRIBUTING.en.md) · [Gameplay guide](docs/en/gameplay.md)
+[Start walking](https://pixelwalk.fun/) · [Contribute scenery](CONTRIBUTING.en.md) · [Gameplay guide](docs/en/gameplay.md)
 
 ![Actual PixelWalk gameplay: a traveler approaches a bakery in the mountains](docs/images/gameplay.png)
 

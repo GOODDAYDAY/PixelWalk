@@ -11,4 +11,8 @@ if(fs.existsSync(manifestFile)){const live=content(JSON.parse(fs.readFileSync(ma
 const settings=require('../settings.js').validate(JSON.parse(fs.readFileSync(path.join(root,'scenery/config.json'),'utf8')));
 fs.writeFileSync(path.join(out,'world-settings.js'),'/* Generated from scenery/config.json. */\nwindow.PixelWalkSettings='+JSON.stringify(settings)+';\n');
 fs.writeFileSync(path.join(out,'.nojekyll'),'');
-console.log('Built dist/ with relative asset paths for GitHub Pages or any static server.');
+// Workflow builds need the CNAME inside the uploaded artifact: the Pages setting
+// alone does not inject it. Keep it in sync with the Pages custom domain.
+const domain=process.env.PIXELWALK_DOMAIN||'pixelwalk.fun';
+fs.writeFileSync(path.join(out,'CNAME'),domain+'\n');
+console.log('Built dist/ with relative asset paths, CNAME '+domain+', for GitHub Pages or any static server.');

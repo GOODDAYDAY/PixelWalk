@@ -4,7 +4,7 @@
 
 走一段路，看一处风景。一个有日夜、月相和小小彩蛋的像素漫游世界，也欢迎你为它画下一处风景。
 
-[开始漫游](https://jilinjl.github.io/PixelWalk/) · [贡献一处风景](CONTRIBUTING.md) · [玩法指南](docs/zh-CN/gameplay.md)
+[开始漫游](https://pixelwalk.fun/) · [贡献一处风景](CONTRIBUTING.md) · [玩法指南](docs/zh-CN/gameplay.md)
 
 ![PixelWalk 实际游戏画面：旅人走向山间面包房](docs/images/gameplay.png)
 
