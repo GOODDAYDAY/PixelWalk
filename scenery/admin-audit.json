@@ -13,5 +13,13 @@
   "actorId": 62745529,
   "action": "approve",
   "issue": 3
+ },
+ {
+  "at": "2026-10-16T02:53:55.529Z",
+  "actor": "JilinJL",
+  "actorId": 62745529,
+  "action": "settings",
+  "id": "world-settings",
+  "title": "世界参数"
  }
 ]

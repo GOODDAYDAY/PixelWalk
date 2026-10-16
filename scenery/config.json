@@ -5,8 +5,8 @@
  "scenesPerPhase": 5,
  "airborneOffset": 96,
  "defaultVolume": 10,
- "colorsSmall": 7,
- "colorsMedium": 10,
- "colorsLarge": 12,
- "colorsGiant": 14
+ "colorsSmall": 14,
+ "colorsMedium": 14,
+ "colorsLarge": 18,
+ "colorsGiant": 22
 }
