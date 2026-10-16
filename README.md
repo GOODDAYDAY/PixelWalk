@@ -14,16 +14,9 @@
 
 作品需来源清楚、允许公开展示与分发，并符合[内容规范](docs/zh-CN/content-policy.md)。审核与发布流程见[审核说明](docs/zh-CN/moderation.md)和[投放说明](docs/zh-CN/publishing.md)。
 
-## 本地运行
+## 认可开源社区
 
-需要 Node.js 24+ 和 Python 3，无需安装 npm 依赖。
-
-```sh
-npm run dev         # http://127.0.0.1:5173
-npm test
-npm run build:site  # dist/
-npm run build       # outputs/PixelWalk-demo.html
-```
+<img src="https://ld.xh.do/ld-badge.svg" alt="认可linux.do" width="200" height="28">
 
 ## 音乐
 
