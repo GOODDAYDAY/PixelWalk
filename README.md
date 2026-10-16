@@ -16,7 +16,7 @@
 
 ## 认可开源社区
 
-<img src="https://ld.xh.do/ld-badge.svg" alt="认可linux.do" width="200" height="28">
+![认可linux.do](https://ld.xh.do/ld-badge.svg)
 
 ## 音乐
 
