@@ -15,8 +15,20 @@ test('30 minute simulation never shows two artworks and keeps correct phase afte
 test('immersive requires initial forward press, sustains after release, exit stops immediately',()=>{const c=new TravelControls(),w=new World();c.setImmersive(true);w.update(.05,c.input(false,false));assert.equal(w.x,0);c.pressForward();for(let i=0;i<100;i++)w.update(.05,c.input(false,false));assert.equal(w.x,400);c.setImmersive(false);w.update(.05,c.input(false,false));assert.equal(w.x,400);c.pressForward();w.update(.05,c.input(false,false));assert.equal(w.x,400);c.setImmersive(true);c.pressForward();c.stop();assert.equal(c.input(false,false).right,false)});
 test('contributors are empty by default; search supports names, handles and ID deduplication',()=>{assert.deepEqual(filterContributors([]),[]);const names=Array.from({length:1000},(_,i)=>({userId:i,name:'Test '+i,github:'person-'+i}));assert.equal(filterContributors(names).length,1000);assert.deepEqual(filterContributors(names,' PERSON-998 '),[names[998]]);assert.equal(filterContributors([names[0],names[0]]).length,1);assert.equal(filterContributors(names,'no-match').length,0)});
 test('music uses equal-power day/night crossfade at the default 10% volume',()=>{assert.deepEqual(musicMix(0),[.1,0]);const [a,b]=musicMix(.5);assert.ok(Math.abs(a-b)<1e-10);assert.ok(Math.abs(a*a+b*b-.01)<1e-10);const [day,night]=musicMix(1);assert.ok(day<1e-10);assert.equal(night,.1)});
-test('preview remains independent and obeys same placement',()=>{const main=new World(),p=new World({preview:true,candidate:{phase:'night',size:'giant',airborne:true}});walk(p,690);assert.equal(p.passed,1);assert.equal(main.passed,0);assert.equal(p.environment().night,1);assert.deepEqual(placement({size:'giant',airborne:true}),{size:320,x:0,y:16})});
+test('preview remains independent and obeys same placement',()=>{const main=new World(),p=new World({preview:true,candidate:{phase:'night',size:'giant',airborne:true}});walk(p,p.scenes[0].passX);assert.equal(p.passed,1);assert.equal(main.passed,0);assert.equal(p.environment().night,1);assert.deepEqual(placement({size:'giant',airborne:true}),{size:336,width:336,height:336,x:-8,y:0})});
 test('frame stall is capped and cabin lower bound holds',()=>{const w=new World();w.update(90,{right:true});assert.equal(w.x,4);for(let i=0;i<500;i++)w.update(.05,{left:true});assert.equal(w.x,CFG.cabinMinX)});
+test('giant images preserve aspect ratio, fit the window, and leave before scene transitions',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+ const context={document:{createElement(){let source;return {getContext(){return {drawImage(image){source=image},getImageData(){return {data:source.data}}}}}}}};context.globalThis=context;vm.createContext(context);
+ for(const file of ['settings.js','engine.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context);
+ function image(width,height){const data=new Uint8ClampedArray(160*160*4);for(let y=160-height;y<160;y++)for(let x=0;x<width;x++)data[(y*160+x)*4+3]=255;return {data}}
+ const wide={size:'giant',extent:960,image:image(160,40),phase:'day'},tall={size:'giant',extent:960,image:image(40,160),phase:'day'};
+ const api=context.PixelWalk,p=api.placement(wide);assert.equal(p.width,960);assert.equal(p.height,240);assert.equal(p.y,192);
+ for(const art of [wide,tall,{...wide,airborne:true},{...tall,airborne:true}]){const p=api.placement(art);assert.ok(p.width<=CFG.width);assert.ok(p.height<=CFG.height);assert.ok(p.y>=0);assert.equal(p.y+p.height,CFG.ground-(art.airborne?CFG.airborneOffset:0));assert.ok(Math.abs(p.width/p.height-(art.image===wide.image?4:.25))<.01)}
+ const w=new api.World({catalog:[wide,{...wide,phase:'night'}]});
+ for(let i=0;i<12000;i++){w.update(.05,{right:true});assert.ok(w.visibleScenes().length<=1);if(w.visibleScenes().length&&['day','night'].includes(w.environment().label))assert.equal(w.visibleScenes()[0].phase,w.environment().label)}
+ const preview=new api.World({preview:true,candidate:wide});while(preview.x<preview.scenes[0].passX)preview.update(.05,{right:true});assert.equal(preview.passed,1);
+});
 test('moon cycles once per completed night, survives recycling, pauses and resets',()=>{
  const w=new World(),phases=['new','first-quarter','full','last-quarter','new'];
  for(let night=0;night<phases.length;night++){

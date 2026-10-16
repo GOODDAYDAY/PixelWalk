@@ -68,13 +68,14 @@ $('#defaults').onclick=()=>{for(const [k,v] of Object.entries(session.defaults))
 $('#settings-form').onsubmit=e=>{e.preventDefault();run(async()=>{const settings=Object.fromEntries(Object.keys(session.schema).map(k=>[k,Number(e.target.elements[k].value)]));await act('settings',{settings})})};
 async function openEditor(item){
  editId=item?(item.id||'gh-'+item.issue):null;source=null;originalPng=null;resultPng=null;processing++;
- form.reset();form.elements.title.value=item?.title||'';form.elements.authorName.value=item?.authorName||item?.login||session.actor.login;form.elements.source.value=item?.source||'';form.elements.phase.value=item?.phase||'day';form.elements.size.value=item?.size||'medium';form.elements.airborne.checked=!!item?.airborne;
+ form.reset();form.elements.title.value=item?.title||'';form.elements.authorName.value=item?.authorName||item?.login||session.actor.login;form.elements.source.value=item?.source||'';form.elements.phase.value=item?.phase||'day';form.elements.size.value=item?.size||'medium';form.elements.extent.value=item?.extent??PixelWalkConfig.artwork.giantDefault;form.elements.airborne.checked=!!item?.airborne;
  $('#author-field').hidden=!!item;$('#editor-title').textContent=item?'编辑风景':'上传风景';$('#editor-error').textContent='';$('#file-status').textContent='透明 PNG / WebP，最大 8 MB。自动生成正式像素图。';$('#tile').getContext('2d').clearRect(0,0,160,160);walking=false;buildPreview();$('#editor').showModal();
  if(item){try{const response=await fetch('/api/image?path='+encodeURIComponent(item.file));if(!response.ok)throw Error('读取作品图片失败');const img=await createImageBitmap(await response.blob());if(!$('#editor').open||editId!==(item.id||'gh-'+item.issue)){img.close();return}const c=$('#tile');c.getContext('2d').drawImage(img,0,0,160,160);source=img;originalPng=true;$('#already-pixel').checked=true;buildPreview(c);$('#file-status').textContent='已载入现有图片。选择文件可替换；不选文件则保留原图。'}catch(error){$('#editor-error').textContent=error.message}}
 }
 function buildPreview(image){
+ $('#giant-size-field').hidden=form.elements.size.value!=='giant';$('#admin-extent-value').value=form.elements.extent.value;
  if(!image&&($('#tile').getContext('2d').getImageData(0,0,160,160).data.some((v,i)=>i%4===3&&v)))image=$('#tile');
- const candidate={id:'admin-preview',title:form.elements.title.value,phase:form.elements.phase.value,size:form.elements.size.value,airborne:form.elements.airborne.checked,image};
+ const candidate={id:'admin-preview',title:form.elements.title.value,phase:form.elements.phase.value,size:form.elements.size.value,extent:Number(form.elements.extent.value),airborne:form.elements.airborne.checked,image};
  previewWorld=new PixelWalk.World({preview:true,candidate});previewRenderer=new PixelWalk.Renderer($('#preview'),previewWorld);
 }
 function convert(){
@@ -96,6 +97,7 @@ $('#art-file').onchange=()=>run(async()=>{
  source?.close?.();source=img;originalPng=file.type==='image/png';if(!form.elements.title.value)form.elements.title.value=file.name.replace(/\.[^.]+$/,'').slice(0,40);convert();
 });
 for(const key of ['phase','size','airborne'])form.elements[key].onchange=()=>{if(key==='size')$('#already-pixel').checked=false;convert()};$('#already-pixel').onchange=convert;
+form.elements.extent.oninput=()=>buildPreview();
 $('#upload').onclick=()=>run(()=>openEditor());
 function closeEditor(){walking=false;processing++;source?.close?.();source=null;$('#editor').close()}
 $('#close-editor').onclick=closeEditor;$('#cancel-editor').onclick=closeEditor;$('#editor').addEventListener('close',()=>walking=false);
@@ -106,7 +108,7 @@ form.onsubmit=e=>{
   $('#editor-error').textContent='';
   if(source&&!resultPng){$('#editor-error').textContent='请先修正图片预览错误';return}
   if(!editId&&!resultPng){$('#editor-error').textContent='请选择一张透明图片';return}
-  const data={id:editId,title:form.elements.title.value,source:form.elements.source.value,phase:form.elements.phase.value,size:form.elements.size.value,airborne:form.elements.airborne.checked,authorName:form.elements.authorName.value};if(resultPng)data.png=resultPng;
+  const data={id:editId,title:form.elements.title.value,source:form.elements.source.value,phase:form.elements.phase.value,size:form.elements.size.value,airborne:form.elements.airborne.checked,authorName:form.elements.authorName.value};if(data.size==='giant')data.extent=Number(form.elements.extent.value);if(resultPng)data.png=resultPng;
   try{await act(editId?'edit':'upload',data);closeEditor()}catch(error){$('#editor-error').textContent=error.message;throw error}
  })
 };

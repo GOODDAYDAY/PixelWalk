@@ -29,6 +29,16 @@ test('issue form parses into a scenery entry',()=>{
  assert.ok(L.parseIssue(body({phase:'_No response_'})).errors.length);
 });
 
+test('giant issue dimensions survive approval and publication with a safe legacy default',()=>{
+ assert.equal(L.parseIssue(body({size:'巨大'})).extent,480);
+ const giantBody=body({size:'巨大'})+'\n### 巨大作品尺寸\n\n960\n';
+ assert.equal(L.parseIssue(giantBody).extent,960);
+ for(const bad of ['961','0','480.5','hello'])assert.ok(L.parseIssue(body({size:'巨大'})+'\n### 巨大作品尺寸\n\n'+bad).errors.some(e=>e.includes('巨大作品尺寸')));
+ const p=pipeline(),event=p.ev('lin','/approve');event.issue.body=giantBody;p.run('review',event);
+ assert.equal(p.manifest().items[0].extent,960);p.run('publish');
+ assert.equal(L.content(p.manifest()).scenery[0].extent,960);
+});
+
 test('PNG validation accepts game output and rejects wrong size, opaque or junk files',()=>{
  const clean=L.sanitizePng(art());assert.deepEqual(L.decodePng(clean).width,160);
  assert.throws(()=>L.sanitizePng(L.encodePng(16,16,Buffer.alloc(16*16*4))),/160×160/);
@@ -56,6 +66,7 @@ test('content lists only published scenery and dedupes contributors by GitHub id
 function pipeline(){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pw-'));fs.mkdirSync(path.join(dir,'scripts'));
  for(const f of ['scenery.cjs','scenery-lib.cjs'])fs.copyFileSync(path.join(__dirname,'../scripts',f),path.join(dir,'scripts',f));
+ fs.copyFileSync(path.join(__dirname,'../settings.js'),path.join(dir,'settings.js'));
  const png=art(),calls=path.join(dir,'calls.json');fs.writeFileSync(calls,'[]');
  const comments=path.join(dir,'comments.json');fs.writeFileSync(comments,'[]');
  const mock=path.join(dir,'mock.cjs');

@@ -3,6 +3,7 @@
    validation / sanitising, manifest bookkeeping and content.js generation.
    No network or git here, so everything is unit-testable. */
 const zlib=require('node:zlib');
+const {validateExtent}=require('../settings.js');
 
 const SIZE=160,MAX_BYTES=1024*1024;
 const PHASE={'日景':'day','夜景':'night'},SIZES={'小':'small','中':'medium','大':'large','巨大':'giant'},PLACE={'地面':false,'空中':true};
@@ -35,7 +36,8 @@ function parseIssue(body){
  const urls=[...new Set((s['像素 PNG']||'').match(IMAGE_URL)||[])];
  if(!urls.length)errors.push('没有找到上传的 PNG，请把图片拖入「像素 PNG」');
  else if(urls.length>1)errors.push('只能附一张 PNG');
- return {title,phase,size,airborne,imageUrl:urls[0]||null,source,errors};
+ let extent;if(size==='giant'){try{extent=validateExtent(s['巨大作品尺寸']?Number(s['巨大作品尺寸']):undefined)}catch(error){errors.push(error.message)}}
+ return {title,phase,size,airborne,...(extent!==undefined?{extent}:{}),imageUrl:urls[0]||null,source,errors};
 }
 
 /* ---------- PNG ---------- */
@@ -109,7 +111,7 @@ function published(manifest){return manifest.items.filter(i=>i.status==='publish
 function content(manifest,imageFor=item=>item.file){
  const items=published(manifest),seen=new Set(),contributors=[];
  for(const i of items)if(!seen.has(String(i.userId??i.authorName??i.id))){seen.add(String(i.userId??i.authorName??i.id));contributors.push({userId:i.userId??i.authorName??i.id,name:i.authorName||i.login,github:i.login||''})}
- return {...(manifest.disabledBuiltins?.length?{disabledBuiltins:manifest.disabledBuiltins}:{}),contributors,scenery:items.map(i=>({id:i.id||'gh-'+i.issue,title:i.title,phase:i.phase,size:i.size,airborne:!!i.airborne,author:i.authorName||'@'+i.login,github:i.login||'',image:imageFor(i)}))};
+ return {...(manifest.disabledBuiltins?.length?{disabledBuiltins:manifest.disabledBuiltins}:{}),contributors,scenery:items.map(i=>({id:i.id||'gh-'+i.issue,title:i.title,phase:i.phase,size:i.size,...(i.size==='giant'&&i.extent!==undefined?{extent:validateExtent(i.extent)}:{}),airborne:!!i.airborne,author:i.authorName||'@'+i.login,github:i.login||'',image:imageFor(i)}))};
 }
 function contentJs(data){
  // Escape "<" so the file stays safe when inlined into a <script> tag.

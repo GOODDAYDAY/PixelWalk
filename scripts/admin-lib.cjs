@@ -11,7 +11,7 @@ function metadata(input){
  if(!['small','medium','large','giant'].includes(input.size))throw Error('请选择体积');
  if(typeof input.airborne!=='boolean')throw Error('摆放方式无效');
  const source=String(input.source||'').trim().slice(0,1000);if(!source)throw Error('请填写素材来源与使用许可');
- return {title,phase:input.phase,size:input.size,airborne:input.airborne,source};
+ return {title,phase:input.phase,size:input.size,...(input.size==='giant'?{extent:config.validateExtent(input.extent)}:{}),airborne:input.airborne,source};
 }
 function pngData(value){
  if(typeof value!=='string'||value.length>1400000||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(value))throw Error('请先生成透明像素 PNG');
@@ -36,6 +36,7 @@ function apply(state,action,input,actor){
   if(!item)throw Error('作品不存在，请刷新列表');
   if(action==='edit'){
    Object.assign(item,metadata(input));
+   if(item.size!=='giant')delete item.extent;
    if(input.png){const png=pngData(input.png),hash=crypto.createHash('sha256').update(png).digest('hex');item.file='scenery/images/'+key(item)+'-'+hash.slice(0,12)+'.png';item.sha256=hash;files[item.file]=png}
   }else if(action==='archive'){item.previousStatus=item.status;item.status='archived';item.archivedAt=at}
   else if(action==='restore'){

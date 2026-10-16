@@ -32,6 +32,7 @@
 <input id="art-name" class="px px-input" maxlength="40" placeholder="名字" aria-label="作品名称">
 <div class="px-group" role="group" aria-label="时段"><button data-phase="day" class="px-key selected" aria-pressed="true">☀</button><button data-phase="night" class="px-key" aria-pressed="false">☾</button></div>
 <div class="px-group" role="group" aria-label="体积"><button data-size="small" class="px-key" aria-pressed="false">S</button><button data-size="medium" class="px-key selected" aria-pressed="true">M</button><button data-size="large" class="px-key" aria-pressed="false">L</button><button data-size="giant" class="px-key" aria-pressed="false">XL</button></div>
+<label id="giant-size-control" class="giant-size" hidden>尺寸 <input id="giant-extent" type="range" min="320" max="960" step="1" value="480" aria-label="巨大作品尺寸"><output id="giant-extent-value">480</output></label>
 <div class="px-group" role="group" aria-label="摆放"><button data-air="false" class="px-key selected" aria-pressed="true">地面</button><button data-air="true" class="px-key" aria-pressed="false">空中</button></div>
 <p id="process-status" class="status" role="status"></p>
 </section>

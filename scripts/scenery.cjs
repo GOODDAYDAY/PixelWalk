@@ -76,7 +76,7 @@ async function review(){
  try{if(form.errors.length)throw Object.assign(Error(form.errors.join('；')),{userFacing:true});png=L.sanitizePng(await download(form.imageUrl))}
  catch(error){if(!error.userFacing)throw error;await comment(issue.number,`无法通过：${error.message}。`);return output('changed','false')}
  const file=`scenery/images/gh-${issue.number}.png`;fs.mkdirSync(images,{recursive:true});fs.writeFileSync(path.join(root,file),png);
- const item={issue:issue.number,login:issue.user.login,userId:issue.user.id,title:form.title,phase:form.phase,size:form.size,airborne:form.airborne,file,source:form.source,sha256:crypto.createHash('sha256').update(png).digest('hex'),status:'queued',approvedBy:actor,approvedAt:new Date().toISOString()};
+ const item={issue:issue.number,login:issue.user.login,userId:issue.user.id,title:form.title,phase:form.phase,size:form.size,...(form.extent!==undefined?{extent:form.extent}:{}),airborne:form.airborne,file,source:form.source,sha256:crypto.createHash('sha256').update(png).digest('hex'),status:'queued',approvedBy:actor,approvedAt:new Date().toISOString()};
  manifest.items=manifest.items.filter(i=>i.issue!==issue.number).concat(item);writeAll(manifest);
  await removeLabel(issue.number,'pending-review');await removeLabel(issue.number,'needs-changes');await addLabels(issue.number,['approved']);
  await comment(issue.number,`✅ @${actor} 审核通过「${item.title}」，已保存图片快照，等待批量部署；投放任务约每 30 分钟检查一次，GitHub 调度可能延迟。`);

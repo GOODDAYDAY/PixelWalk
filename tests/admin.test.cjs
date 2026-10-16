@@ -6,6 +6,13 @@ const actor={id:A.OWNER_ID,login:'JilinJL'};
 const base=()=>({sha:'base',manifest:{version:1,items:[]},settings:C.defaults,audit:[]});
 function image(){const rgba=Buffer.alloc(160*160*4);for(let y=30;y<140;y++)for(let x=40;x<100;x++){const p=(y*160+x)*4;rgba[p]=220;rgba[p+1]=90;rgba[p+3]=255}return 'data:image/png;base64,'+L.encodePng(160,160,rgba).toString('base64')}
 const upload=()=>({title:'灯塔',phase:'night',size:'large',airborne:false,source:'本人原创，允许分发',authorName:'画师',png:image()});
+test('custom giant extent survives upload, edit and generated content; invalid sizes are rejected',()=>{
+ const s=base(),r=A.apply(s,'upload',{...upload(),size:'giant',extent:960},actor),item=r.manifest.items[0];
+ assert.equal(item.extent,960);assert.equal(L.content(r.manifest).scenery[0].extent,960);
+ const edited=A.apply({...s,manifest:r.manifest},'edit',{...upload(),size:'giant',extent:640,id:item.id},actor);assert.equal(L.content(edited.manifest).scenery[0].extent,640);
+ const smaller=A.apply({...s,manifest:edited.manifest},'edit',{...upload(),id:item.id},actor);assert.equal(Object.hasOwn(smaller.manifest.items[0],'extent'),false);
+ for(const extent of [0,319,961,480.5,'960'])assert.throws(()=>A.apply(s,'upload',{...upload(),size:'giant',extent},actor),/巨大作品尺寸/);
+});
 test('owner console uploads, edits, archives and restores without losing the source or credit',()=>{
  const s=base(),r=A.apply(s,'upload',upload(),actor);assert.equal(s.manifest.items.length,0);assert.equal(r.manifest.items.length,1);const item=r.manifest.items[0];assert.match(item.id,/^admin-/);assert.ok(A.IMAGE.test(item.file));assert.equal(L.content(r.manifest).scenery[0].author,'画师');assert.equal(L.content(r.manifest).contributors[0].name,'画师');assert.equal(L.content(r.manifest).contributors[0].github,'');
  const next={...s,manifest:r.manifest},archived=A.apply(next,'archive',{id:item.id},actor);assert.equal(L.content(archived.manifest).scenery.length,0);assert.equal(archived.manifest.items[0].file,item.file);assert.ok(!Object.values(archived.files).includes(null));

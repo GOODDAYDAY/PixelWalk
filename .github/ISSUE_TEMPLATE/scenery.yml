@@ -37,6 +37,12 @@ body:
       options: [小, 中, 大, 巨大]
     validations:
       required: true
+  - type: input
+    id: extent
+    attributes:
+      label: 巨大作品尺寸
+      description: 仅巨大档使用，320–960；留空为 480。保持比例并自动适配画面。
+      placeholder: "480"
   - type: dropdown
     id: placement
     attributes:

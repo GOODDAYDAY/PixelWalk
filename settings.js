@@ -21,6 +21,11 @@ function validate(input={}){
  for(const [key,value] of Object.entries(input)){const s=schema[key];if(!Number.isInteger(value)||value<s.min||value>s.max)throw Error(s.label+'需为 '+s.min+'–'+s.max+' 的整数');out[key]=value}
  return out;
 }
-const api={schema,defaults,validate,values:validate(root.PixelWalkSettings||{})};
+const artwork={pixelBase:4,pixelExponent:.75,giantMin:320,giantMax:960,giantDefault:480};
+function validateExtent(value=artwork.giantDefault){
+ if(!Number.isInteger(value)||value<artwork.giantMin||value>artwork.giantMax)throw Error('巨大作品尺寸需为 320–960 的整数');
+ return value;
+}
+const api={schema,defaults,validate,artwork,validateExtent,values:validate(root.PixelWalkSettings||{})};
 root.PixelWalkConfig=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

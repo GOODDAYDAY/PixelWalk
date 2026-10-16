@@ -1,7 +1,7 @@
 /* PixelWalk: dependency-free world simulation and shared Canvas renderer. */
 (function(root){
 'use strict';
-const settings=(root.PixelWalkConfig||(typeof require==='function'?require('./settings.js'):null)).values;
+const config=root.PixelWalkConfig||(typeof require==='function'?require('./settings.js'):null),settings=config.values;
 const CFG={width:960,height:540,ground:432,playerX:144,speed:80,stride:1328,container:320,recycleMargin:64,transition:320,spawnMargin:48,cabinDoorX:-724,cabinMinX:-1008,...settings};
 const DAY=[['bakery','风从面包房来','large'],['balloon','把云寄给你','giant'],['cat','午睡的橘子','small'],['tree','一棵树的下午','large'],['windmill','风的邮局','giant']];
 const NIGHT=[['observatory','收集星光的人','giant'],['ufo','远道而来的朋友','giant'],['lamp','晚归的一盏灯','medium'],['mushroom','月光小屋','large'],['fox','睡前的好梦','small']];
@@ -12,16 +12,16 @@ const MOON_PHASES=['new','first-quarter','full','last-quarter'];
 class World{
  constructor(options={}){this.catalog=options.catalog||builtinCatalog;this.candidate=options.candidate||null;this.preview=!!options.preview;this.reset()}
  reset(){this.x=0;this.distance=0;this.passed=0;this.locked=false;this.direction=1;this.walking=false;this.scenes=[];this.nextOrdinal=1;this.nextX=370;this.transitions=[];this.stableNight=0;this.completedNights=0;this.houseOpen=false;this.seed=17;this.recent=[];this.populate()}
- populate(){if(this.preview){if(!this.scenes.length)this.scenes=[{ordinal:1,x:370,passX:690,phase:this.candidate?.phase||'day',art:this.candidate||{id:'tree',title:'一棵树的下午',size:'large'},passed:false}];return}
+ populate(){if(this.preview){if(!this.scenes.length){const art=this.candidate||{id:'tree',title:'一棵树的下午',size:'large'},span=sceneSpan(art),x=370-span.left;this.scenes=[{ordinal:1,x,passX:x+span.right,phase:art.phase||'day',art,passed:false}]}return}
  while(this.nextX<this.x+CFG.width+CFG.stride*2){const ordinal=this.nextOrdinal,phase=Math.floor((ordinal-1)/CFG.scenesPerPhase)%2?'night':'day';
  let pool=this.catalog.filter(a=>a.phase===phase);if(!pool.length){this.nextX+=CFG.stride;this.nextOrdinal++;if(ordinal%CFG.scenesPerPhase===0){const start=this.nextX-320,end=start+CFG.transition;this.transitions.push({start,end,from:phase,to:phase==='day'?'night':'day',ordinal})}continue}
  let choices=pool.filter(a=>!this.recent.includes(a.id));if(!choices.length)choices=pool;
  const art=ordinal===1?(pool.find(a=>a.id==='bakery')||pool[0]):choices[Math.floor(noise(this.seed++)*choices.length)];this.recent.push(art.id);if(this.recent.length>8)this.recent.shift();
- const scene={ordinal,x:this.nextX,passX:this.nextX+320,phase,art,passed:false};this.scenes.push(scene);
- if(ordinal%CFG.scenesPerPhase===0){const start=scene.passX+CFG.playerX+CFG.recycleMargin,end=start+CFG.transition;this.transitions.push({start,end,from:phase,to:phase==='day'?'night':'day',ordinal});this.nextX=end+CFG.width-CFG.playerX+CFG.spawnMargin}else this.nextX+=CFG.stride;this.nextOrdinal++;
+ const span=sceneSpan(art),x=this.nextX-span.left,scene={ordinal,x,passX:x+span.right,phase,art,passed:false};this.scenes.push(scene);
+ if(ordinal%CFG.scenesPerPhase===0){const start=scene.passX+CFG.playerX+CFG.recycleMargin,end=start+CFG.transition;this.transitions.push({start,end,from:phase,to:phase==='day'?'night':'day',ordinal});this.nextX=end+CFG.width-CFG.playerX+CFG.spawnMargin}else this.nextX=scene.passX+Math.max(CFG.stride-CFG.container,CFG.width+CFG.spawnMargin);this.nextOrdinal++;
  }
  }
- update(dt,input){if(this.houseOpen){this.walking=false;return 0}dt=clamp(dt,0,.05);let dir=(input.right?1:0)-(input.left?1:0);if(this.locked&&dir<0)dir=0;const old=this.x;this.x=Math.max(this.preview?0:CFG.cabinMinX,this.x+dir*CFG.speed*dt);if(this.preview)this.x=Math.min(1000,this.x);this.walking=this.x!==old;if(this.walking)this.direction=dir;this.distance+=Math.abs(this.x-old);const before=this.passed;
+ update(dt,input){if(this.houseOpen){this.walking=false;return 0}dt=clamp(dt,0,.05);let dir=(input.right?1:0)-(input.left?1:0);if(this.locked&&dir<0)dir=0;const old=this.x;this.x=Math.max(this.preview?0:CFG.cabinMinX,this.x+dir*CFG.speed*dt);if(this.preview)this.x=Math.min(Math.max(1000,...this.scenes.map(s=>s.passX+CFG.playerX)),this.x);this.walking=this.x!==old;if(this.walking)this.direction=dir;this.distance+=Math.abs(this.x-old);const before=this.passed;
  for(const s of this.scenes){if(!s.passed&&this.x>=s.passX){s.passed=true;this.passed++;this.locked=true}}
  this.populate();if(this.locked&&!this.preview)this.scenes=this.scenes.filter(s=>s.passX-this.x+CFG.playerX>=-CFG.recycleMargin);
  while(this.transitions.length&&this.x>=this.transitions[0].end){const transition=this.transitions.shift();this.stableNight=transition.to==='night'?1:0;if(transition.from==='night')this.completedNights++}return this.passed-before;
@@ -33,7 +33,7 @@ class World{
  canEnterHouse(){return this.inCabinPage&&!this.locked&&Math.abs(this.x-CFG.cabinDoorX)<=28}
  enterHouse(){if(!this.canEnterHouse())return false;this.houseOpen=true;this.walking=false;return true}
  leaveHouse(){this.houseOpen=false}
- visibleScenes(){return this.scenes.filter(s=>s.x-this.cameraX<CFG.width&&s.passX-this.cameraX>0)}
+ visibleScenes(){return this.scenes.filter(s=>s.x+sceneSpan(s.art).left-this.cameraX<CFG.width&&s.passX-this.cameraX>0)}
  activeScene(){return this.scenes.find(s=>!s.passed)||this.scenes[this.scenes.length-1]}
 }
 class TravelControls {
@@ -99,9 +99,28 @@ function sprite(id){if(spriteCache.has(id))return spriteCache.get(id);const c=do
  }
  spriteCache.set(id,c);return c;
 }
-function placement(art){const size={small:64,medium:128,large:224,giant:320}[art.size]||128;return {size,x:(320-size)/2,y:CFG.ground-size-(art.airborne?CFG.airborneOffset:0)}}
+const boundsCache=new WeakMap();
+function artworkBounds(art){
+ if(typeof document==='undefined')return {x:0,y:0,width:160,height:160};
+ if(boundsCache.has(art))return boundsCache.get(art);const bitmap=artworkBitmap(art);
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=160;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0,160,160);
+ const data=ctx.getImageData(0,0,160,160).data;let left=160,top=160,right=-1,bottom=-1;
+ for(let y=0;y<160;y++)for(let x=0;x<160;x++)if(data[(y*160+x)*4+3]){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y)}
+ const bounds=right>=left?{x:left,y:top,width:right-left+1,height:bottom-top+1}:{x:0,y:0,width:160,height:160};boundsCache.set(art,bounds);return bounds;
+}
+function placement(art){
+ const floor=CFG.ground-(art.airborne?CFG.airborneOffset:0);
+ if(art.size==='giant'){
+  const bounds=artworkBounds(art),requested=Number.isInteger(art.extent)?clamp(art.extent,config.artwork.giantMin,config.artwork.giantMax):config.artwork.giantDefault;
+  const scale=Math.min(requested/Math.max(bounds.width,bounds.height),CFG.width/bounds.width,floor/bounds.height);
+  const width=Math.max(1,Math.floor(bounds.width*scale)),height=Math.max(1,Math.floor(bounds.height*scale));
+  return {size:Math.max(width,height),width,height,x:Math.floor((CFG.container-width)/2),y:floor-height};
+ }
+ const size={small:64,medium:128,large:224}[art.size]||128;return {size,x:(320-size)/2,y:floor-size};
+}
+function sceneSpan(art){const p=placement(art);return {left:Math.min(0,p.x),right:Math.max(CFG.container,p.x+(p.width||p.size))}}
 // Normalize built-in pieces to the same 160px transparent tile used by uploads.
-// This keeps every displayed pixel on a consistent 2-world-unit grid.
+// Small/medium/large retain the 2-world-unit grid; giants fit their chosen extent.
 const artworkCache=new Map();
 function artworkBitmap(art){
  if(art.image)return art.image;
@@ -110,7 +129,7 @@ function artworkBitmap(art){
  let left=160,top=160,right=-1,bottom=-1;
  for(let y=0;y<160;y++)for(let x=0;x<160;x++)if(data[(y*160+x)*4+3]>0){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y)}
  const tile=document.createElement('canvas');tile.width=tile.height=160;
- if(right>=left){const max=placement(art).size/2,sw=right-left+1,sh=bottom-top+1,scale=max/Math.max(sw,sh),dw=Math.max(1,Math.round(sw*scale)),dh=Math.max(1,Math.round(sh*scale)),ctx=tile.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(source,left,top,sw,sh,Math.floor((160-dw)/2),160-dh,dw,dh)}
+ if(right>=left){const max=({small:32,medium:64,large:112,giant:160}[art.size]||64),sw=right-left+1,sh=bottom-top+1,scale=max/Math.max(sw,sh),dw=Math.max(1,Math.round(sw*scale)),dh=Math.max(1,Math.round(sh*scale)),ctx=tile.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(source,left,top,sw,sh,Math.floor((160-dw)/2),160-dh,dw,dh)}
  artworkCache.set(key,tile);return tile;
 }
 class Renderer{
@@ -127,7 +146,7 @@ class Renderer{
  rect(g,0,400,960,34,pal.grass);rect(g,0,428,960,8,pal.grass2);rect(g,0,436,960,8,pal.earth);rect(g,0,444,960,50,pal.road);rect(g,0,490,960,8,pal.road2);rect(g,0,498,960,42,pal.front);
  for(let i=0;i<135;i++){const wx=Math.floor(viewX/37)*37+i*37-150,sx=wx-viewX;const yy=404+noise(wx+11)*23;rect(g,sx,yy,4+noise(wx)*9,2,noise(wx+4)>.5?pal.grass2:mix(pal.grass,'#cfdb95',.25));if(i%4===0){rect(g,sx,yy-5,2,5,pal.grass2);rect(g,sx-2,yy-6,5,3,mix('#eee3a2','#9fbd9a',n))}rect(g,sx+noise(wx+3)*23,452+noise(wx+7)*34,4+noise(wx+6)*12,2,noise(wx+2)>.5?pal.road2:mix(pal.road,'#e8d8ac',.5))}
  if(w.inCabinPage){g.drawImage(sprite('hut'),240,152,280,280);rect(g,358,427,43,6,pal.road2);rect(g,250,431,260,4,pal.grass2)}
- for(const scene of w.scenes){const sx=scene.x-viewX+144;if(sx>1030||sx+320<-80)continue;const a=scene.art,p=placement(a);if(!a.airborne){g.globalAlpha=.15;rect(g,sx+160-p.size*.4,429,p.size*.8,6,'#243f35');g.globalAlpha=1}g.drawImage(artworkBitmap(a),Math.round(sx/2)*2,CFG.ground-320-(a.airborne?CFG.airborneOffset:0),320,320);if(n>.2&&['lamp','mushroom','observatory'].includes(a.id)){g.globalAlpha=n*.14;rect(g,sx+p.x+p.size*.25,p.y+p.size*.4,p.size*.5,p.size*.5,'#ffe8a2');g.globalAlpha=1}}
+ for(const scene of w.scenes){const sx=scene.x-viewX+144,a=scene.art,p=placement(a),span=sceneSpan(a);if(sx+span.left>1030||sx+span.right<-80)continue;const width=p.width||p.size,height=p.height||p.size;if(!a.airborne){g.globalAlpha=.15;rect(g,sx+160-width*.4,429,width*.8,6,'#243f35');g.globalAlpha=1}if(a.size==='giant'){const b=artworkBounds(a);g.drawImage(artworkBitmap(a),b.x,b.y,b.width,b.height,Math.round(sx)+p.x,p.y,width,height)}else g.drawImage(artworkBitmap(a),Math.round(sx/2)*2,CFG.ground-320-(a.airborne?CFG.airborneOffset:0),320,320);if(n>.2&&['lamp','mushroom','observatory'].includes(a.id)){g.globalAlpha=n*.14;rect(g,sx+p.x+width*.25,p.y+height*.4,width*.5,height*.5,'#ffe8a2');g.globalAlpha=1}}
  this.player(time,n);
  for(let i=0;i<33;i++){const wx=Math.floor(viewX/41)*41+i*41-80,sx=wx-viewX;const yy=501+noise(wx)*35;rect(g,sx,yy,3,8,mix('#63865a','#385e4c',n));rect(g,sx+4,yy+4,7,2,mix('#75955e','#416951',n));if(i%5===0){rect(g,sx+7,yy-1,4,4,mix('#d5c681','#6e9773',n))}}
  if(n>.25&&!this.reduced){g.globalAlpha=n*.7;for(let i=0;i<9;i++){const x=((noise(i+6)*1200-viewX*.8)%1100+1100)%1100,y=345+noise(i+22)*80+Math.sin(time/1000+i)*7;rect(g,x,y,2,2,'#f1dfa0')}g.globalAlpha=1}
@@ -135,5 +154,5 @@ class Renderer{
  }
  player(time,night){const g=this.g,w=this.world,x=Math.round(w.playerScreenX),step=w.walking?Math.floor(w.distance/8)%4:0,bob=w.walking&&step%2?2:0,y=432-bob;g.save();g.translate(x,y);if(w.direction<0)g.scale(-1,1);g.globalAlpha=.16;rect(g,-14,0,30,4,'#1e392b');g.globalAlpha=1;const shoe='#384c49',pants='#58666b';rect(g,-7,-16,6,12,pants);rect(g,3,-16,6,12,pants);rect(g,-9-(step===1?4:0),-5,10,5,shoe);rect(g,2+(step===3?4:0),-5,10,5,shoe);rect(g,-10,-31,20,19,'#d1a557');rect(g,-15,-31,7,17,'#6e7960');rect(g,-16,-29,3,12,'#9ba280');rect(g,9,-27,5,13,'#e2bf8b');rect(g,-8,-44,20,16,'#e8c697');rect(g,-9,-45,22,7,'#574c41');rect(g,-10,-44,5,15,'#574c41');rect(g,8,-37,3,3,'#354d46');rect(g,-10,-48,23,7,'#b16f50');rect(g,-5,-52,15,6,'#c8875b');rect(g,-15,-43,32,4,'#d8a270');rect(g,-8,-30,20,4,'#a56c4b');g.restore()}
 }
-root.PixelWalk={acceptsGameKeys,builtinCatalog,artworkBitmap,CFG,World,Renderer,TravelControls,filterContributors,sprite,placement,clamp,spriteCache,MOON_PHASES,drawMoon};if(typeof module!=='undefined')module.exports={acceptsGameKeys,builtinCatalog,CFG,World,TravelControls,filterContributors,placement,MOON_PHASES,drawMoon};
+root.PixelWalk={acceptsGameKeys,builtinCatalog,artworkBitmap,artworkBounds,CFG,World,Renderer,TravelControls,filterContributors,sprite,placement,clamp,spriteCache,MOON_PHASES,drawMoon};if(typeof module!=='undefined')module.exports={acceptsGameKeys,builtinCatalog,CFG,World,TravelControls,filterContributors,placement,MOON_PHASES,drawMoon};
 })(typeof window!=='undefined'?window:globalThis);

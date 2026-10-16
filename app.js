@@ -67,13 +67,14 @@ function frame(t){const dt=lastTime?Math.min((t-lastTime)/1000,.05):0;lastTime=t
 // Studio: choose image → auto pixelate → walk past it → download → submit on GitHub.
 // Any option change re-renders immediately; nothing is stored in the browser.
 let sourceImage=null,sourceURL=null,processedImage=null,selectionToken=0;
-const opts={phase:'day',size:'medium',airborne:false};
+const opts={phase:'day',size:'medium',airborne:false,extent:PixelWalkConfig.artwork.giantDefault};
 const ISSUE_URL='https://github.com/JilinJL/PixelWalk/issues/new';
 function status(text='',error=false){$('#process-status').textContent=text;$('#process-status').classList.toggle('error',error)}
 function setReady(ready){$('#download-submission').disabled=!ready;$('#submit-issue').setAttribute('aria-disabled',String(!ready));$('#submit-issue').tabIndex=ready?0:-1}
-function issueLink(){const q=new URLSearchParams({template:'scenery.yml',title:'[风景投稿] '+artTitle(),'work-title':artTitle(),phase:opts.phase==='night'?'夜景':'日景',size:{small:'小',medium:'中',large:'大',giant:'巨大'}[opts.size],placement:opts.airborne?'空中':'地面'});return ISSUE_URL+'?'+q}
+function issueLink(){const q=new URLSearchParams({template:'scenery.yml',title:'[风景投稿] '+artTitle(),'work-title':artTitle(),phase:opts.phase==='night'?'夜景':'日景',size:{small:'小',medium:'中',large:'大',giant:'巨大'}[opts.size],placement:opts.airborne?'空中':'地面'});if(opts.size==='giant')q.set('extent',opts.extent);return ISSUE_URL+'?'+q}
 function artTitle(){return $('#art-name').value.trim()||'我的风景'}
 function rebuild(){
+ $('#giant-size-control').hidden=opts.size!=='giant';
  clearInput();processedImage=null;setReady(false);
  const result=$('#pixel-result');
  if(!sourceImage){result.hidden=true;$('#slot-empty').hidden=false;previewWorld=new World({preview:true});previewRenderer=new Renderer($('#preview-game'),previewWorld);return}
@@ -99,6 +100,7 @@ $('#image-file').onchange=e=>loadFile(e.target.files[0]);
 $('#sample-button').onclick=async()=>{++selectionToken;const img=new Image();img.src=sprite('cat').toDataURL();await img.decode();if(sourceURL){URL.revokeObjectURL(sourceURL);sourceURL=null}$('#art-name').value='';showSource(img,'午睡的橘子')};
 function pick(attr,key,parse=v=>v){$$(`[data-${attr}]`).forEach(b=>b.onclick=()=>{opts[key]=parse(b.dataset[attr]);$$(`[data-${attr}]`).forEach(x=>{x.classList.toggle('selected',x===b);x.setAttribute('aria-pressed',String(x===b))});rebuild()})}
 pick('phase','phase');pick('size','size');pick('air','airborne',v=>v==='true');
+$('#giant-extent').oninput=e=>{opts.extent=Number(e.target.value);$('#giant-extent-value').value=opts.extent;rebuild()};
 $('#art-name').addEventListener('change',rebuild);
 $('#preview-reset').onclick=()=>{clearInput();previewWorld.reset();$('#preview-game').focus({preventScroll:true})};
 $('#download-submission').onclick=()=>{if(!processedImage)return;const link=document.createElement('a');link.href=processedImage.toDataURL('image/png');link.download='PixelWalk-'+artTitle().replace(/[\\/:*?"<>|\s]+/g,'_')+'.png';link.click()};
