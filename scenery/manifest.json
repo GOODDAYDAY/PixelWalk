@@ -17,6 +17,25 @@
    "approvedAt": "2026-10-15T17:43:04.629Z",
    "publishedAt": "2026-10-15T17:43:26.523Z",
    "announcedAt": "2026-10-15T17:44:24.336Z"
+  },
+  {
+   "id": "admin-42b716e64eb7bd62cfc88454",
+   "title": "废弃车厢",
+   "phase": "day",
+   "size": "giant",
+   "extent": 425,
+   "airborne": false,
+   "source": "车厢",
+   "authorName": "JilinJL",
+   "login": "JilinJL",
+   "userId": 62745529,
+   "file": "scenery/images/admin-42b716e64eb7bd62cfc88454.png",
+   "sha256": "b8391a48d1e860a144ccc6635579c636c893946de4383457e3addeb47cfb626f",
+   "status": "published",
+   "publishedAt": "2026-10-16T07:42:07.515Z",
+   "approvedBy": "JilinJL",
+   "approvedAt": "2026-10-16T07:42:07.515Z",
+   "createdBy": "JilinJL"
   }
  ]
 }

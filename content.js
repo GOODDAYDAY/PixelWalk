@@ -5,6 +5,11 @@ window.PixelWalkContent={
    "userId": 323084256,
    "name": "VecSum",
    "github": "VecSum"
+  },
+  {
+   "userId": 62745529,
+   "name": "JilinJL",
+   "github": "JilinJL"
   }
  ],
  "scenery": [
@@ -17,6 +22,17 @@ window.PixelWalkContent={
    "author": "@VecSum",
    "github": "VecSum",
    "image": "scenery/images/gh-3.png"
+  },
+  {
+   "id": "admin-42b716e64eb7bd62cfc88454",
+   "title": "废弃车厢",
+   "phase": "day",
+   "size": "giant",
+   "extent": 425,
+   "airborne": false,
+   "author": "JilinJL",
+   "github": "JilinJL",
+   "image": "scenery/images/admin-42b716e64eb7bd62cfc88454.png"
   }
  ]
 };

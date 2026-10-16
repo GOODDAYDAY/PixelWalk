@@ -21,5 +21,13 @@
   "action": "settings",
   "id": "world-settings",
   "title": "世界参数"
+ },
+ {
+  "at": "2026-10-16T07:42:07.515Z",
+  "actor": "JilinJL",
+  "actorId": 62745529,
+  "action": "upload",
+  "id": "admin-42b716e64eb7bd62cfc88454",
+  "title": "废弃车厢"
  }
 ]
